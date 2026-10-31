@@ -12,7 +12,8 @@ else if(_state=="play") {
         if(_p.dead) { draw_set_color(c_gray); draw_text(_hud_x-10,48,string(ceil(_p.respawn_timer/60))); }
         if(_p.y<camera_y+60)draw_triangle(_hud_x,55,_hud_x-8,68,_hud_x+8,68,false);
     }
-} else if(_state=="ending" && ending_timer>120) {
+} else if(_state=="gameover") scr_draw_gameover();
+else if(_state=="ending" && ending_timer>120) {
     var _fade=clamp((ending_timer-120)/100,0,1);
     draw_set_alpha(_fade);draw_set_color(make_color_rgb(27,32,39));draw_rectangle(0,0,1366,768,false);
     draw_set_alpha(1);draw_set_color(make_color_rgb(76,88,93));draw_rectangle(430,100,936,390,false);

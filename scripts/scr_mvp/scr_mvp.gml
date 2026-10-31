@@ -2,16 +2,20 @@
 function scr_player_init(_index) {
     player_number = _index; active_player=true; body_half_width = 16; body_height = 70;
     move_speed = 4; jump_speed = -11; gravity_speed = 0.48;
-    x = (_index==0 ? 270 : 1096); y = 1408; vy = 0; facing = (_index == 0 ? 1 : -1);
+    x = (_index==0 ? 270 : 1096); y = scr_floor_y(); vy = 0; facing = (_index == 0 ? 1 : -1);
     material_count = 0; collected_total = 0; built_total = 0; recoveries = 0;
     respawn_x = x; respawn_y = y; grounded = true; invulnerable = 0;
     enemy_hits=0;fall_hits=0;last_move=0;shared_uses=0;last_support=noone;recovery_valid=true;reset_blocks_total=0;section_resets=0;
     checkpoint_level = 0; depth = -10; qa_jump_cooldown = 0; qa_target=noone;
     player_lives = 3; dead = false; respawn_timer = 0; charge = 0;
 }
+// Floor sits 128 px above the bottom of the room, so a taller room is more climb.
+function scr_floor_y() {
+    return room_height - 128;
+}
 // Section 0 is ground-to-first-checkpoint; each next section is 192 px high.
 function scr_tower_section_at_y(_top) {
-    return max(0, floor((1408 - _top - 1) / 192));
+    return max(0, floor((scr_floor_y() - _top - 1) / 192));
 }
 function scr_reset_section_blocks(_section) {
     var _remove=[];
@@ -62,8 +66,11 @@ function scr_player_die() {
         dead = true;
         active_player = false;
         respawn_timer = 30 * 60;
-        if (global.death_window_timer <= 0) global.death_window_timer = 30 * 60;
-        else global.restart_game = true;
+        // The second elimination inside the window is a shared loss, not a restart.
+        var _partner = instance_find(player_number == 0 ? obj_player_p2 : obj_player_p1, 0);
+        var _both_down = (_partner != noone && _partner.dead) || global.death_window_timer > 0;
+        if (!_both_down) global.death_window_timer = 30 * 60;
+        else scr_begin_gameover();
     }
 }
 function scr_player_tick(_move, _jump, _build, _jump_held=false) {

@@ -1,7 +1,7 @@
 global.game_timer++;
 var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
 if(_p1==noone || _p2==noone)exit;
-if(global.restart_game){global.restart_game=false;room_restart();exit;}
+if(global.restart_game){scr_return_to_title();exit;}
 if(global.qa_section_test) {
     var _section_report=scr_qa_section_reset_test(_p1,_p2);
     var _section_file=file_text_open_write("qa_section_reset_result.json");
@@ -28,7 +28,7 @@ if(global.game_state=="title") {
     scr_intro_audio();
     if(global.game_timer>=720 || (!global.qa && global.game_timer>60 && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)))) {
         global.game_state="play";global.game_timer=0;
-        scr_music(mus_game);
+        scr_screen_music("play");
     }
 } else if(global.game_state=="play") {
     var _high_y=100000;
@@ -92,14 +92,17 @@ if(global.game_state=="title") {
     }
     if(_any_active && _all_finished) {
         if(room_next(room)!=-1) { room_goto_next(); exit; }
-        else { global.game_state="ending"; ending_timer=0; global.game_timer=0; scr_music(mus_ending); scr_sfx(sfx_victory,0,0.9); }
+        else { global.game_state="ending"; ending_timer=0; global.game_timer=0; scr_screen_music("ending"); scr_sfx(sfx_victory,0,0.9); }
     }
 } else if(global.game_state=="ending") {
     ending_timer++;
     if(ending_timer>420 && (keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up)||global.qa)) {
         if(global.qa) {global.qa_result=scr_qa_summary(_p1,_p2);global.qa_restart_pending=true;}
-        room_restart();exit;
+        scr_return_to_title();exit;
     }
+} else if(global.game_state=="gameover") {
+    global.gameover_timer++;
+    if(!global.qa) scr_gameover_input(global.gameover_timer);
 }
 if(global.qa) {
     global.qa_frame++;

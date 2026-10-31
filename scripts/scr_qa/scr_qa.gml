@@ -94,16 +94,17 @@ function scr_qa_input() {
 
 // Focused runtime fixture, separate from the action-driven full-game replay.
 function scr_qa_section_reset_test(_p1,_p2) {
-    var _earlier=instance_create_layer(64,1376,"Instances_1",obj_build_block);
-    var _current_one=instance_create_layer(128,1184,"Instances_1",obj_build_block);
-    var _current_two=instance_create_layer(192,1152,"Instances_1",obj_build_block);
-    var _later=instance_create_layer(256,992,"Instances_1",obj_build_block);
+    var _floor=scr_floor_y();
+    var _earlier=instance_create_layer(64,_floor-32,"Instances_1",obj_build_block);
+    var _current_one=instance_create_layer(128,_floor-224,"Instances_1",obj_build_block);
+    var _current_two=instance_create_layer(192,_floor-256,"Instances_1",obj_build_block);
+    var _later=instance_create_layer(256,_floor-416,"Instances_1",obj_build_block);
     _current_one.builder_number=0;_current_two.builder_number=1;
-    _p1.checkpoint_level=1;_p1.respawn_x=640;_p1.respawn_y=1216;_p1.material_count=3;
+    _p1.checkpoint_level=1;_p1.respawn_x=640;_p1.respawn_y=_floor-192;_p1.material_count=3;
     with(_p1) scr_player_recover();
     var _section_one_ok=!instance_exists(_current_one) && !instance_exists(_current_two)
         && instance_exists(_earlier) && instance_exists(_later)
-        && _p1.x==640 && _p1.y==1216 && _p1.material_count==3 && _p1.reset_blocks_total==2;
+        && _p1.x==640 && _p1.y==_floor-192 && _p1.material_count==3 && _p1.reset_blocks_total==2;
     _p2.material_count=2;
     with(_p2) scr_player_recover();
     var _fixed=0;
@@ -111,9 +112,9 @@ function scr_qa_section_reset_test(_p1,_p2) {
         if(instance_find(obj_build_block,_i).is_checkpoint) _fixed++;
     }
     var _ok=_section_one_ok && !instance_exists(_earlier) && instance_exists(_later)
-        && _p2.y==1408 && _p2.material_count==2 && _p2.reset_blocks_total==1
+        && _p2.y==_floor && _p2.material_count==2 && _p2.reset_blocks_total==1
         && _fixed==0 && instance_number(obj_build_block)==1 && _p1.recovery_valid && _p2.recovery_valid;
     return {passed:_ok,section_one_removed:_p1.reset_blocks_total,section_zero_removed:_p2.reset_blocks_total,
         fixed_platforms:_fixed,later_section_preserved:instance_exists(_later),both_builders_removed:_section_one_ok,
-        inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==1216 && _p2.y==1408};
+        inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==_floor-192 && _p2.y==_floor};
 }
