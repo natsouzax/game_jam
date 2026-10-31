@@ -47,13 +47,34 @@ function scr_qa_capture() {
     if(global.game_state=="intro" && global.game_timer mod 240==120)screen_save("qa_intro_"+string(global.game_timer div 240)+".png");
     if(global.game_state=="play" && global.game_timer==300)screen_save(global.qa_solo>=0?"qa_solo"+string(global.qa_solo+1)+"_gameplay.png":"qa_gameplay.png");
     if(global.game_state=="play" && global.game_timer==5)screen_save(global.qa_solo>=0?"qa_solo"+string(global.qa_solo+1)+"_start.png":"qa_coop_start.png");
-    if(global.game_state=="ending" && ending_timer==300)screen_save("qa_final.png");
+    if(global.game_state=="ending" && ending_timer==170)screen_save("qa_cut_vision.png");
+    if(global.game_state=="ending" && ending_timer==225)screen_save("qa_cut_empty_hands.png");
+    if(global.game_state=="ending" && ending_timer==300)screen_save("qa_cut_point.png");
+    if(global.game_state=="ending" && ending_timer==390)screen_save("qa_cut_plant.png");
+    if(global.game_state=="ending" && ending_timer==620)screen_save("qa_cut_work.png");
+    if(global.game_state=="ending" && ending_timer==930)screen_save("qa_cut_room.png");
+    if(global.game_state=="ending" && ending_timer==1100)screen_save("qa_cut_room_settled.png");
+    if(global.game_state=="ending" && ending_timer==1280)screen_save("qa_cut_look.png");
+    if(global.game_state=="ending" && ending_timer==1520)screen_save("qa_cut_realize.png");
+    if(global.game_state=="ending" && ending_timer==1700)screen_save("qa_cut_leave.png");
+    if(global.game_state=="ending" && ending_timer==2100)screen_save("qa_cut_deed_sweep.png");
+    if(global.game_state=="ending" && ending_timer==2650)screen_save("qa_cut_deed_lantern.png");
+    if(global.game_state=="ending" && ending_timer==3150)screen_save("qa_cut_deed_plant.png");
+    if(global.game_state=="ending" && ending_timer==3700)screen_save("qa_cut_deed_water.png");
+    if(global.game_state=="ending" && ending_timer==4300)screen_save("qa_cut_montage.png");
+    if(global.game_state=="ending" && ending_timer==4700)screen_save("qa_final.png");
 }
 function scr_qa_input() {
     var _move=0;var _jump=false;var _build=false;
     if(global.qa_recovery_test && player_number==0 && checkpoint_level>=1 && fall_hits==0)return [1,grounded,false];
     if(global.qa_recovery_test && player_number==1 && checkpoint_level>=2 && enemy_hits==0) {
-        var _enemy=instance_find(obj_enemy,0);
+        var _enemy=noone;var _enemy_distance=100000;
+        for(var _e=0;_e<instance_number(obj_enemy);_e++) {
+            var _candidate=instance_find(obj_enemy,_e);
+            if(_candidate!=noone && abs(_candidate.x-x)+abs(_candidate.y-y)<_enemy_distance) {
+                _enemy=_candidate;_enemy_distance=abs(_candidate.x-x)+abs(_candidate.y-y);
+            }
+        }
         if(_enemy!=noone)return [sign(_enemy.x-x),grounded,false];
     }
     if(qa_jump_cooldown>0)qa_jump_cooldown--;

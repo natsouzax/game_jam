@@ -1,8 +1,10 @@
 ﻿{
+    "enemy_hits":  1.0,
+    "fall_hits":  1.0,
     "simultaneous_frames":  268.0,
     "passed":  true,
     "ending":  true,
-    "frames":  4074.0,
+    "frames":  5933.0,
     "players":  2.0,
     "menu_ok":  true,
     "intro_all_scenes":  true,
@@ -20,12 +22,10 @@
     "p1_shared_uses":  4.0,
     "p2_shared_uses":  4.0,
     "p1_removed_blocks":  10.0,
-    "p2_removed_blocks":  2.0,
-    "section_scope_ok":  true,
-    "restarted":  true,
     "solo_character":  0.0,
-    "enemy_hits":  1.0,
-    "fall_hits":  1.0,
-    "data_sha256":  "D1210C9F6DB36498CFB4E80C51CC1DF6C95090EBA7640F5CC5E49564C3E6AE8C",
-    "source_commit":  "8a7f3bda3e9cb357684c112356832231f568e696"
+    "p2_removed_blocks":  2.0,
+    "restarted":  true,
+    "section_scope_ok":  true,
+    "data_sha256":  "FCC765C7043BCC0F08F7C2E4D89F6EBA4042D8E13951B95A0002194D9275F57A",
+    "source_commit":  "5d45a2e9d4b4cc61303b4a8e7f7bfda5164072ab"
 }

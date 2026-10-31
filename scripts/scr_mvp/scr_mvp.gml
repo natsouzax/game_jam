@@ -8,6 +8,34 @@ function scr_player_init(_index) {
     enemy_hits=0;fall_hits=0;last_move=0;shared_uses=0;last_support=noone;recovery_valid=true;reset_blocks_total=0;section_resets=0;
     checkpoint_level = 0; depth = -10; qa_jump_cooldown = 0; qa_target=noone;
 }
+// One distinct hazard per phase (1..5): duck, bat, patrol robot, star, falling metal.
+function scr_enemy_spawn(_level) {
+    var _home_y=1408-(_level-1)*192-120;
+    var _e=instance_create_layer(672,_home_y,"Instances_1",obj_enemy);
+    _e.kind=_level-1;
+    _e.level_id=_level;
+    _e.home_x=672;_e.home_y=_home_y;
+    _e.phase=_level*0.9;
+    switch(_e.kind) {
+        case 0:
+            _e.x=180;_e.home_x=180;_e.home_y=1374;
+            _e.walk_dir=1;_e.patrol_speed=1.15;_e.hit_radius=27;
+            break;
+        case 1:
+            _e.patrol_speed=0.040;_e.orbit_reach=170;_e.bob_amount=26;_e.hit_radius=30;
+            break;
+        case 2:
+            _e.patrol_speed=0.048;_e.orbit_reach=205;_e.bob_amount=14;_e.hit_radius=33;
+            break;
+        case 3:
+            _e.patrol_speed=0.013;_e.fall_range=150;_e.hit_radius=28;
+            break;
+        case 4:
+            _e.patrol_speed=0.023;_e.fall_range=140;_e.hit_radius=34;
+            break;
+    }
+    return _e;
+}
 // Section 0 is ground-to-first-checkpoint; each next section is 192 px high.
 function scr_tower_section_at_y(_top) {
     return max(0, floor((1408 - _top - 1) / 192));

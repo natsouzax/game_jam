@@ -14,12 +14,12 @@ if (!$compiledFile) { throw 'Fresh compiled gameJam.win was not found' }
 Copy-Item -LiteralPath $compiledFile -Destination (Join-Path $stagePath 'data.win') -Force
 $engineSource = Join-Path $projectRoot 'build\gameJam.exe'
 if (!(Test-Path -LiteralPath $engineSource)) { $engineSource = Join-Path $runtimePath 'windows\x64\Runner.exe' }
-$engineDestination = Join-Path $stagePath 'JUNTOS.exe'
+$engineDestination = Join-Path $stagePath 'TOGETHER.exe'
 if (!(Test-Path -LiteralPath $engineDestination) -or (Get-FileHash -LiteralPath $engineSource).Hash -ne (Get-FileHash -LiteralPath $engineDestination).Hash) {
     Copy-Item -LiteralPath $engineSource -Destination $engineDestination -Force
 }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'build\options.ini') -Destination (Join-Path $stagePath 'options.ini') -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot 'delivery\README.md') -Destination (Join-Path $stagePath 'README.md') -Force
-@('@echo off', 'cd /d "%~dp0"', 'start "" "%~dp0JUNTOS.exe" -game "%~dp0data.win"') | Set-Content -LiteralPath (Join-Path $stagePath 'Jogar.cmd') -Encoding ASCII
+@('@echo off', 'cd /d "%~dp0"', 'start "" "%~dp0TOGETHER.exe" -game "%~dp0data.win"') | Set-Content -LiteralPath (Join-Path $stagePath 'Play.cmd') -Encoding ASCII
 if (Test-Path -LiteralPath (Join-Path $stagePath 'gameJam.win')) { Remove-Item -LiteralPath (Join-Path $stagePath 'gameJam.win') }
-Get-FileHash -LiteralPath (Join-Path $stagePath 'data.win'),(Join-Path $stagePath 'JUNTOS.exe') -Algorithm SHA256 | Format-Table -AutoSize
+Get-FileHash -LiteralPath (Join-Path $stagePath 'data.win'),(Join-Path $stagePath 'TOGETHER.exe') -Algorithm SHA256 | Format-Table -AutoSize
