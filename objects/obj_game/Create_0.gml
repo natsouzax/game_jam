@@ -1,3 +1,4 @@
+global.qa_skip_ending=false;
 if (!variable_global_exists("game_state")) global.game_state="title";
 if (!variable_global_exists("game_timer")) global.game_timer=0;
 if (!variable_global_exists("menu_mode")) { global.menu_mode=1; global.menu_stage=0; global.solo_character=0; global.player_count=2; }
@@ -14,6 +15,7 @@ if (!variable_global_exists("qa_solo")) global.qa_solo=-1;
 for(var _a=1;_a<=parameter_count();_a++) {
     var _arg=parameter_string(_a);
     if(_arg=="--qa-section-reset"){global.qa=true;global.qa_section_test=true;}
+    if(_arg=="--qa-skip-ending"){global.qa=true;global.qa_skip_ending=true;}
     if(_arg=="--qa")global.qa=true;
     if(_arg=="--qa-recovery"){global.qa=true;global.qa_recovery_test=true;}
     if(_arg=="--qa-solo1"){global.qa=true;global.qa_solo=0;}
