@@ -21,6 +21,7 @@ AUDIO_META = {
     "mus_game": {"volume": 0.5, "preload": True},
     "mus_intro": {"volume": 0.6, "preload": True},
     "mus_ending": {"volume": 0.55, "preload": True},
+    "mus_gameover": {"volume": 0.48, "preload": True},
     "sfx_ui_move": {"volume": 0.5, "preload": True},
     "sfx_ui_confirm": {"volume": 0.65, "preload": True},
     "sfx_ui_back": {"volume": 0.5, "preload": True},
@@ -333,6 +334,35 @@ def compose_ending():
     return mix
 
 
+def compose_gameover():
+    bpm = 68.0
+    beat = 60.0 / bpm
+    bars = 4
+    mix = Mix(bars * 4 * beat)
+    chords = [[45, 48, 52], [41, 45, 48], [43, 46, 50], [40, 43, 47]]
+    roots = [33, 29, 31, 28]
+    melody = [
+        [(0.5, 1.5, 64), (2.5, 1.2, 60)],
+        [(0.0, 2.0, 62), (2.5, 1.0, 57)],
+        [(1.0, 1.5, 65), (3.0, 1.0, 60)],
+        [(0.0, 3.0, 57)],
+    ]
+    for bar in range(bars):
+        t0 = bar * 4.0
+        for pitch in chords[bar]:
+            note(mix, beat, t0, 3.9, pitch, kind="tri", vol=0.12,
+                 decay=0.0, attack=0.4, release=0.5)
+        note(mix, beat, t0, 3.9, roots[bar], kind="sine", vol=0.2,
+             decay=0.0, attack=0.35, release=0.5)
+        for off, length, pitch in melody[bar]:
+            note(mix, beat, t0 + off, length, pitch, kind="sine", vol=0.16,
+                 decay=0.8, attack=0.02, release=0.3)
+        mix.add(t0 * beat, kick(0.22))
+        mix.add((t0 + 2.0) * beat, kick(0.16))
+    mix.finish(0.7)
+    return mix
+
+
 def make_jump():
     mix = Mix(0.18)
     mix.add(0.0, sweep(300, 780, 0.14, "square", 0.55, 0.25, decay=4.0))
@@ -451,6 +481,7 @@ BUILDERS = {
     "mus_game": compose_game,
     "mus_intro": compose_intro,
     "mus_ending": compose_ending,
+    "mus_gameover": compose_gameover,
     "sfx_jump": make_jump,
     "sfx_hit": make_hit,
     "sfx_fall": make_fall,

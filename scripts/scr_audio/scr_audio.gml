@@ -1,30 +1,69 @@
 function scr_audio_init() {
+    var _keep_track = -1;
+    var _keep_handle = -1;
+    if (variable_global_exists("music_track")) _keep_track = global.music_track;
+    if (variable_global_exists("music_handle")) _keep_handle = global.music_handle;
     global.audio_enabled = !global.qa;
+    global.intro_scene = 0;
+    if (!global.audio_enabled) {
+        global.music_track = -1;
+        global.music_handle = -1;
+        return;
+    }
+    audio_master_gain(0.7);
+    // Keep the current track across room changes so gameplay music is not stacked.
+    global.music_track = _keep_track;
+    global.music_handle = _keep_handle;
+}
+
+function scr_music_stop() {
+    if (variable_global_exists("music_handle") && global.music_handle != -1) audio_stop_sound(global.music_handle);
+    global.music_handle = -1;
+    global.music_track = -1;
+    if (audio_is_playing(mus_menu)) audio_stop_sound(mus_menu);
+    if (audio_is_playing(mus_intro)) audio_stop_sound(mus_intro);
+    if (audio_is_playing(mus_game)) audio_stop_sound(mus_game);
+    if (audio_is_playing(mus_ending)) audio_stop_sound(mus_ending);
+    if (audio_is_playing(mus_gameover)) audio_stop_sound(mus_gameover);
+}
+
+function scr_audio_silence() {
+    scr_music_stop();
+    audio_stop_all();
     global.music_track = -1;
     global.music_handle = -1;
-    global.intro_scene = 0;
-    if (!global.audio_enabled) return;
-    audio_master_gain(0.7);
 }
 
 function scr_music(_track) {
-    if (!global.audio_enabled) return;
-    if (global.music_track == _track) return;
-    if (global.music_handle != -1) audio_stop_sound(global.music_handle);
-    global.music_handle = -1;
+    if (!variable_global_exists("audio_enabled") || !global.audio_enabled) return;
+    var _playing = variable_global_exists("music_handle") && global.music_handle != -1 && audio_is_playing(global.music_handle);
+    if (global.music_track == _track && _playing) return;
+    scr_music_stop();
     global.music_track = _track;
+    global.music_handle = -1;
     if (_track != -1) global.music_handle = audio_play_sound(_track, 0, true);
 }
 
+// One track per screen. Switching always stops the previous music first.
+// title -> mus_menu | intro -> mus_intro | play -> mus_game
+// ending -> mus_ending | gameover -> mus_gameover
+function scr_screen_music(_screen) {
+    if (_screen == "intro") scr_music(mus_intro);
+    else if (_screen == "play") scr_music(mus_game);
+    else if (_screen == "ending") scr_music(mus_ending);
+    else if (_screen == "gameover") scr_music(mus_gameover);
+    else scr_music(mus_menu);
+}
+
 function scr_sfx(_sound, _variation=0, _gain=1) {
-    if (!global.audio_enabled) return;
+    if (!variable_global_exists("audio_enabled") || !global.audio_enabled) return;
     var _instance = audio_play_sound(_sound, 5, false);
     if (_variation > 0) audio_sound_pitch(_instance, 1 + random_range(-_variation, _variation));
     if (_gain != 1) audio_sound_gain(_instance, _gain, 0);
 }
 
 function scr_intro_audio() {
-    if (!global.audio_enabled) return;
+    if (!variable_global_exists("audio_enabled") || !global.audio_enabled) return;
     var _scene = min(2, global.game_timer div 240);
     if (_scene != global.intro_scene) {
         global.intro_scene = _scene;

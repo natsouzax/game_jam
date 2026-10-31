@@ -1,4 +1,4 @@
-event_inherited();solid_width=32;solid_height=32;visible=true;depth=0;is_checkpoint=false;level_id=0;
+event_inherited();solid_width=64;solid_height=64;visible=true;depth=0;is_checkpoint=false;level_id=0;
 
 builder_number=-1;
 

@@ -8,9 +8,12 @@ else if(_state=="play") {
         var _hud_x=(global.player_count==1?40:40+_j*54);
         draw_set_color(_j==0?make_color_rgb(80,220,215):make_color_rgb(247,181,77));
         draw_circle(_hud_x,36,13,false);
+        for(var _li=0;_li<_p.player_lives;_li++) { draw_set_color(c_red); draw_circle(_hud_x-6+_li*6,16,3,false); }
+        if(_p.dead) { draw_set_color(c_gray); draw_text(_hud_x-10,48,string(ceil(_p.respawn_timer/60))); }
         if(_p.y<camera_y+60)draw_triangle(_hud_x,55,_hud_x-8,68,_hud_x+8,68,false);
     }
-} else if(_state=="ending" && ending_timer>120) {
+} else if(_state=="gameover") scr_draw_gameover();
+else if(_state=="ending" && ending_timer>120) {
     var _fade=clamp((ending_timer-120)/100,0,1);
     draw_set_alpha(_fade);draw_set_color(make_color_rgb(27,32,39));draw_rectangle(0,0,1366,768,false);
     draw_set_alpha(1);draw_set_color(make_color_rgb(76,88,93));draw_rectangle(430,100,936,390,false);

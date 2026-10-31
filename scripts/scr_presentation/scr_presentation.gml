@@ -18,11 +18,11 @@ function scr_begin_intro() {
     for(var _i=0;_i<2;_i++) {
         var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
         _p.active_player=(global.player_count==2 || _i==global.solo_character);
-        if(global.player_count==1 && _p.active_player){_p.x=672;_p.respawn_x=672;_p.facing=1;}
+        if(global.player_count==1 && _p.active_player){_p.x=(_i==0?270:1096);_p.respawn_x=_p.x;_p.facing=1;}
     }
     global.game_state="intro";global.game_timer=0;
     global.intro_scene=0;
-    scr_music(mus_intro);scr_sfx(sfx_intro_whoosh);
+    scr_screen_music("intro");scr_sfx(sfx_intro_whoosh);
 }
 
 function scr_menu_input(_direction,_confirm,_back) {
@@ -40,10 +40,21 @@ function scr_menu_input(_direction,_confirm,_back) {
 
 function scr_player_controls() {
     if(!active_player)return;
-    if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2]);}
-    else if(global.player_count==1 || player_number==0)
-        scr_player_tick(keyboard_check(ord("D"))-keyboard_check(ord("A")),keyboard_check_pressed(ord("W")),keyboard_check_pressed(ord("E")));
-    else scr_player_tick(keyboard_check(vk_right)-keyboard_check(vk_left),keyboard_check_pressed(vk_up),keyboard_check_pressed(vk_enter));
+    if(dead)return;
+    if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2],false);}
+    else if(global.player_count==1 || player_number==0) {
+        var _mv = keyboard_check(ord("D"))-keyboard_check(ord("A"));
+        var _jp = keyboard_check_pressed(ord("W"));
+        var _jh = keyboard_check(ord("W"));
+        var _bl = keyboard_check_pressed(ord("E"));
+        scr_player_tick(_mv,_jp,_bl,_jh);
+    } else {
+        var _mv2 = keyboard_check(vk_right)-keyboard_check(vk_left);
+        var _jp2 = keyboard_check_pressed(vk_up);
+        var _jh2 = keyboard_check(vk_up);
+        var _bl2 = keyboard_check_pressed(vk_enter);
+        scr_player_tick(_mv2,_jp2,_bl2,_jh2);
+    }
 }
 
 function scr_ui_panel(_l,_t,_r,_b,_selected) {
@@ -150,4 +161,107 @@ function scr_draw_intro() {
     if(_t>60){draw_set_color(make_color_rgb(183,199,190));draw_triangle(1286,722,1286,742,1300,732,false);}
     var _fade=max(clamp((20-_local)/20,0,1),clamp((_local-220)/20,0,1));
     draw_set_alpha(_fade);draw_set_color(make_color_rgb(12,18,25));draw_rectangle(0,0,1366,768,false);draw_set_alpha(1);draw_set_color(c_white);
+}
+
+function scr_return_to_title() {
+    global.game_state = "title";
+    global.menu_stage = 0;
+    global.menu_mode = 1;
+    global.solo_character = 0;
+    global.player_count = 2;
+    global.game_timer = 0;
+    global.restart_game = false;
+    global.death_window_timer = 0;
+    scr_music_stop();
+    room_restart();
+}
+
+function scr_begin_gameover() {
+    if (global.game_state == "gameover") return;
+    global.game_state = "gameover";
+    global.restart_game = false;
+    global.gameover_choice = 0;
+    global.gameover_timer = 0;
+    with (obj_player_p1) { active_player = false; dead = true; }
+    with (obj_player_p2) { active_player = false; dead = true; }
+    // Cut every stacked death sting and the gameplay loop, then one cue plus the screen track.
+    scr_audio_silence();
+    scr_sfx(sfx_fall, 0, 0.65);
+    scr_screen_music("gameover");
+    window_set_cursor(cr_default);
+}
+
+function scr_gameover_button_rect(_index) {
+    var _x = (_index == 0 ? 378 : 726);
+    return [_x, 448, _x + 262, 568];
+}
+
+function scr_gameover_input(_timer) {
+    if (_timer < 18) return;
+    if (keyboard_check_pressed(vk_escape)) {
+        scr_sfx(sfx_ui_back);
+        scr_audio_silence();
+        game_end();
+        return;
+    }
+    var _mx = device_mouse_x_to_gui(0);
+    var _my = device_mouse_y_to_gui(0);
+    var _hover = -1;
+    for (var _i = 0; _i < 2; _i++) {
+        var _r = scr_gameover_button_rect(_i);
+        if (point_in_rectangle(_mx, _my, _r[0], _r[1], _r[2], _r[3])) _hover = _i;
+    }
+    if (_hover != -1) window_set_cursor(cr_handpoint);
+    else window_set_cursor(cr_default);
+    if (_hover != -1 && _hover != global.gameover_choice) {
+        global.gameover_choice = _hover;
+        scr_sfx(sfx_ui_move);
+    }
+    var _dir = (keyboard_check_pressed(ord("D")) || keyboard_check_pressed(vk_right))
+        - (keyboard_check_pressed(ord("A")) || keyboard_check_pressed(vk_left));
+    if (_dir != 0) {
+        var _next = clamp(global.gameover_choice + _dir, 0, 1);
+        if (_next != global.gameover_choice) {
+            global.gameover_choice = _next;
+            scr_sfx(sfx_ui_move);
+        }
+    }
+    var _click = mouse_check_button_pressed(mb_left) && _hover != -1;
+    var _confirm = keyboard_check_pressed(ord("E")) || keyboard_check_pressed(vk_enter);
+    if (!_click && !_confirm) return;
+    if (_click) global.gameover_choice = _hover;
+    scr_sfx(sfx_ui_confirm);
+    if (global.gameover_choice == 0) scr_return_to_title();
+    else {
+        scr_audio_silence();
+        game_end();
+    }
+}
+
+function scr_draw_gameover() {
+    draw_set_alpha(0.82);
+    draw_set_color(make_color_rgb(12, 16, 24));
+    draw_rectangle(0, 0, 1366, 768, false);
+    draw_set_alpha(1);
+    scr_actor_pose(0, 1, 500, 390, 96, 1, 0.72);
+    scr_actor_pose(1, 1, 866, 390, 96, -1, 0.72);
+    draw_set_halign(fa_center);
+    draw_set_valign(fa_middle);
+    draw_set_color(make_color_rgb(9, 17, 24));
+    draw_text_transformed(688, 168, "FIM DE JOGO", 4, 4, 0);
+    draw_set_color(make_color_rgb(232, 168, 122));
+    draw_text_transformed(683, 162, "FIM DE JOGO", 4, 4, 0);
+    var _labels = ["REPETIR", "ENCERRAR"];
+    for (var _i = 0; _i < 2; _i++) {
+        var _r = scr_gameover_button_rect(_i);
+        scr_ui_panel(_r[0], _r[1], _r[2], _r[3], global.gameover_choice == _i);
+        draw_set_color(global.gameover_choice == _i ? make_color_rgb(255, 222, 151) : make_color_rgb(189, 207, 198));
+        draw_text_transformed((_r[0] + _r[2]) / 2, (_r[1] + _r[3]) / 2, _labels[_i], 2, 2, 0);
+    }
+    draw_set_color(make_color_rgb(189, 207, 198));
+    draw_circle(683, 650, 18, true);
+    draw_triangle(678, 640, 678, 660, 692, 650, false);
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
+    draw_set_color(c_white);
 }

@@ -120,6 +120,16 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Replays completos repetidos no executavel distribuido: partida normal e partida com quedas/inimigo passaram ate ambos no topo, final e reinicio. Recuperacoes removeram10 blocos no P1 e2 no P2; verificacao de escopo correta. Ajuste da rota do bot para contornar tetos de blocos preservados, sem mudar colisoes do jogo.
 - LDMT Final v2 e instrucoes revisadas; Plan inicial preservado. ZIP de entrega substituido com a nova build e manifesto/testes atualizados. SHA256 data.win: 3F533A950BB32EA32024AF7B27C8A8A1D4685D44BF6FD086AED2FC52BC10E9F5.
 
+## Salto com carga, gravidade, fundo e spawns - 2026-10-31
+
+- Pedido novo: quatro mudancas de mecanica no jogo em desenvolvimento.
+- Salto: sprite `spr_jump_charge` criado (barra 120x16, fundo escuro + preenchimento verde via draw_rectangle). O PNG foi renomeado para o frame Id GUID (`2f7c9a41-6b53-4d8e-9f0a-1b2c3d4e5f60a.png`); antes o compilador falhava com "Failed to load image". Build de novo concluiu com Igor complete apos o ajuste.
+- Salto W+D/W+A: salto reduzido (vy=-8) e aceleracao horizontal via `_hthrust` (7 px/tick com decaimento), para cruzar o void sem altura absurda. Segurar so W: mecanica de carga mantida com forca reduzida (cap de 0,32 no extra) e topo de salto dentro da altura da room.
+- Itens (material e vida): gravidade 0,3 para 0,12 com `fall_max=7`, para coleta mais facil.
+- Fundo: lerp de fundo reduzido (0,028/0,01 -> 0,02/0,008) e follow (0,82/0,4 -> 0,12/0,04) para movimento muito lento no background.
+- Spawns: inimigos movidos para o nivel inicial (Room1) no Create do obj_game para test drive.
+- Git: alteracoes locais preservadas; sem commit/push/merge/publicacao.
+
 ## Arte simplificada, menu e solo - 2026-10-31
 
 - Natan aprovou explicitamente o estudo visual: P1 grisalho/oculos/ciano, P2 bone/ambar e drone vermelho. Implementacao8a7f3bd na branch jam/mvp-complete; base anterior4a3972a limpa. Nenhum trabalho local de terceiros foi substituido.
