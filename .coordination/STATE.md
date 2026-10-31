@@ -139,3 +139,15 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Build compilada com Igor2026.0.0.23; SHA256 data.win9D4A8CB76E1CB95EF03449A916CB5549B8D19B3DBDAE3ED81CDE65BBDC2C85DF. Coop2061frames, coletas17/4, blocos11/4, uso parceiro4/6, topo/final/reinicio. SoloP1 e soloP2:2188frames cada,25coletas/18blocos do ativo, inativo0, topo/final/reinicio. Recuperacao4432frames, blocos removidos10/2; fixture de secao remove2/1 mantendo outras secoes e cinco checkpoints. Todos passed e mesmo hash/commit8a7f3bd. Capturas revistas de menu, retrato, coop, solo e abertura.
 - LDMT Final3 altera apenas descricoes/observacoes para menu, abertura e participantes ativos. Plan, pesos,1512formulas, IDs e partes nativas preservados; visualizacao dos campos alterados conferida. Fontes originais intactas.
 - Pacote delivery/JUNTOS_Entrega.zip atualizado com build, instrucoes, planilhas, relatorios e capturas. Nenhum push/merge master/upload. Falta rodada humana de teclado/ghosting/conforto/clareza, compatibilidade em outro PC e envio autorizado.
+
+
+## Polimento coordenado OpenCode ? 2026-10-31 (em execu??o)
+
+- Objetivo: revis?o e polimento do ch?o, menu/anima??es, c?u por avan?o real, recursos em toda largura e blocos sob os p?s sem clipping.
+- Branch coordenadora: polish/opencode-gamejam; base c7337d4, snapshot das corre??es de salto/abismo/menu j? verificadas. Altera??o local options/main/options_main.yy preservada fora do commit.
+- Orca 1.4.245, runtime dab005a9-e632-48ee-ab4c-876c99ee9ddf ready. Identidade atestada do coordenador term_2af26cdd-c848-4e5f-9d9b-160120ee6008. Run run_9b7e9d3fee1c, criado neste trabalho; nenhum Run alheio assumido.
+- Executor mec?nicas: OpenCode1.19.0, opencode/big-pickle efetivo confirmado no recibo. task_1408560d02ee, ctx_47190b73f635, term_67d1dee1-9f77-448f-9bd6-f53370e2ce76, aba vis?vel233d2bd2-8935-422d-a2e3-20f28fad8b82. Worktree C:/Users/natan/orca/workspaces/gameJam/jam-mechanics, branch workers/jam-mechanics. Edi??o restrita a scr_mvp, obj_game Step, scr_qa, POLISH_MECHANICS.md.
+- Executor visual: mesmo cliente/modelo, task_6f301360d0f3, ctx_ae9666035f4a, term_a85a07cd-0c95-4110-9626-be52aac4cfcb, aba vis?vel d1ed2d7c-c97d-444a-91d8-a1edb1839578. Worktree C:/Users/natan/orca/workspaces/gameJam/jam-visuals, branch workers/jam-visuals. Edi??o restrita a obj_game Draw, scr_presentation, obj_build_block Draw e POLISH_VISUALS.md.
+- Quota: provider opencode, grupo opencode-shared-account, pre?o input/output0 observado em opencode models opencode --verbose em2026-10-31; remaining/limit/reset desconhecidos, sem fallback pago. Ambos partilham quota; leitura inicial do executor mec?nico mostrou atividade real Build Big Pickle, ainda sem conclus?o verificada.
+- Sele??o: primeiro lote de dois escritores isolados, adequa??o delimitada e piloto anterior do invent?rio; qualidade atual a verificar pelo diff e testes. Nenhuma nota pessoal consultada, nenhum acesso ao vault delegado.
+- Pr?ximo: processar conclus?es Orca, revisar os diffs, compilar/testar integra??o e decidir encerramento dos workers. Sem push/main/master merge autorizado nesta etapa.

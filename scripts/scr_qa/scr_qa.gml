@@ -137,10 +137,22 @@ function scr_qa_regression(_p1,_p2) {
             x=200;y=scr_floor_y();vy=0;
             repeat(150)scr_player_tick(1,false,false,true);
         }
-        var _held=_p1.charge==150 && _p1.x==200;
+        var _held=_p1.charge==DASH_CHARGE_FRAMES && _p1.x==200;
+        var _dash_enemy=instance_create_layer(226,scr_floor_y()-30,"Instances_1",obj_enemy);
         with(_p1)scr_player_tick(0,false,false,false);
-        var _dash=_p1.x==230 && _p1._hthrust>0 && _p1.vy<0;
-        global.regression_report={hole:_hole,bank:_bank,normal_jump:_normal,charge:_held,dash:_dash};
+        var _dash=_p1.x==200+DASH_THRUST && _p1._hthrust>0 && _p1.vy<0;
+        var _ability_kill=!instance_exists(_dash_enemy);
+        global.player_count=2;_p2.active_player=true;
+        var _magnet_mat=instance_create_layer(240,scr_floor_y()-30,"Instances_1",obj_material);
+        with(_p2) {
+            x=200;y=scr_floor_y();vy=0;material_count=0;_hthrust=0;
+            repeat(DASH_CHARGE_FRAMES)scr_player_tick(1,false,false,true);
+            scr_player_tick(0,false,false,false);
+        }
+        var _ability_magnet=_p2.material_count==1 && !instance_exists(_magnet_mat);
+        _p2.active_player=false;global.player_count=1;
+        global.regression_report={hole:_hole,bank:_bank,normal_jump:_normal,charge:_held,dash:_dash,
+            ability_kill:_ability_kill,ability_magnet:_ability_magnet};
         with(_p1){x=270;y=scr_floor_y();vy=0;_hthrust=0;}
         _g.qa_regression_stage=1;
     } else if(_g.qa_regression_stage==1) {
@@ -163,7 +175,7 @@ function scr_qa_regression(_p1,_p2) {
         scr_gameover_select(1);
         global.regression_report.return_title=global.game_state=="title";
         var _r=global.regression_report;
-        _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
+        _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.ability_kill && _r.ability_magnet && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
         var _file=file_text_open_write("qa_regression_result.json");
         file_text_write_string(_file,json_stringify(_r));file_text_close(_file);game_end();
     }

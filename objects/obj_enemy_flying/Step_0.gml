@@ -51,6 +51,7 @@ if (state == 0) {
 for (var _i = 0; _i < 2; _i++) {
     var _p = instance_find((_i == 0 ? obj_player_p1 : obj_player_p2), 0);
     if (_p == noone || !_p.active_player || _p.dead || _p.invulnerable > 0) continue;
+    if (_p.player_number == 0 && _p._hthrust > 0) continue;
     if (point_distance(x, y, _p.x, _p.y - 35) < 32) {
         if (_p.vy >= 0 && (_p.y - 35) < y && abs(_p.x - x) < 28) {
             hp--;

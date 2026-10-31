@@ -533,7 +533,7 @@ function scr_begin_intro() {
     scr_screen_music("intro");scr_sfx(sfx_intro_whoosh);
 }
 
-function scr_menu_input(_direction,_confirm,_back,_vertical=0) {
+function scr_menu_input(_direction,_confirm,_back,_vertical=0,_escape=false) {
     if(global.menu_stage==2) {
         if(_vertical!=0) {
             global.settings_index=1-global.settings_index;
@@ -548,9 +548,10 @@ function scr_menu_input(_direction,_confirm,_back,_vertical=0) {
                 scr_sfx(sfx_ui_move);
             }
         }
-        if(_confirm) {global.menu_stage=0;scr_sfx(sfx_ui_back);}
+        if(_confirm || _escape) {global.menu_stage=0;scr_sfx(sfx_ui_back);}
         return;
     }
+    if(_escape && global.menu_stage==1){global.menu_stage=0;scr_sfx(sfx_ui_back);return;}
     if(_back && global.menu_stage==1){global.menu_stage=0;scr_sfx(sfx_ui_back);return;}
     if(_back && global.menu_stage==0){global.menu_stage=2;global.settings_index=0;scr_sfx(sfx_ui_confirm);return;}
     if(_direction!=0) {
@@ -568,6 +569,7 @@ function scr_player_controls() {
     if(global.qa_regression)return;
     if(!active_player)return;
     if(dead)return;
+    if(global.pause_guard>0) { last_move=0; return; }
     if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2],false);}
     else if(global.player_count==1 || player_number==0) {
         var _mv = keyboard_check(ord("D"))-keyboard_check(ord("A"));
@@ -600,50 +602,78 @@ function scr_ui_person(_x,_y,_color) {
     draw_rectangle(_x-8,_y+10,_x-2,_y+22,false);draw_rectangle(_x+2,_y+10,_x+8,_y+22,false);
 }
 
+function scr_ui_keycap(_x,_y,_label,_scale=1.1) {
+    var _w=string_width(_label)*_scale+22;var _h=26;
+    draw_set_halign(fa_center);draw_set_valign(fa_middle);
+    draw_set_color(make_color_rgb(8,14,20));draw_roundrect(_x-_w/2+3,_y-_h/2+3,_x+_w/2+3,_y+_h/2+3,false);
+    draw_set_color(make_color_rgb(232,190,106));draw_roundrect(_x-_w/2,_y-_h/2,_x+_w/2,_y+_h/2,false);
+    draw_set_color(make_color_rgb(31,43,51));draw_roundrect(_x-_w/2+2,_y-_h/2+2,_x+_w/2-2,_y+_h/2-2,false);
+    draw_set_color(make_color_rgb(245,232,201));
+    draw_text_transformed(_x,_y+1,_label,_scale,_scale,0);
+}
+
+function scr_ui_hint(_x,_y,_key,_label,_scale=1.05) {
+    var _kw=string_width(_key)*1.1+22;var _gap=10;var _lw=string_width(_label)*_scale;
+    var _left=_x-(_kw+_gap+_lw)/2;
+    scr_ui_keycap(_left+_kw/2,_y,_key,1.1);
+    draw_set_halign(fa_left);draw_set_valign(fa_middle);
+    draw_set_color(make_color_rgb(196,210,201));
+    draw_text_transformed(_left+_kw+_gap,_y+1,_label,_scale,_scale,0);
+}
+
 function scr_draw_settings() {
-    var _l=390;var _t=206;var _r=976;var _b=610;
+    var _l=390;var _t=206;var _r=976;var _b=610;var _cx=(_l+_r)/2;
     draw_set_color(make_color_rgb(13,18,27));draw_rectangle(_l+7,_t+7,_r+7,_b+7,false);
     draw_set_color(make_color_rgb(232,190,106));draw_rectangle(_l,_t,_r,_b,false);
     draw_set_color(make_color_rgb(33,44,53));draw_rectangle(_l+4,_t+4,_r-4,_b-4,false);
+    scr_cut_glow(_cx,_t+52,140,make_color_rgb(255,206,130),0.16);
     draw_set_halign(fa_center);draw_set_valign(fa_middle);
-    draw_set_color(make_color_rgb(245,232,201));draw_circle((_l+_r)/2,_t+48,19,true);
-    draw_circle((_l+_r)/2,_t+48,8,true);
+    var _hx=_cx-74;var _hy=_t+48;
+    draw_set_color(make_color_rgb(245,232,201));draw_circle(_hx,_hy,19,true);
+    draw_circle(_hx,_hy,8,true);
     for(var _gear=0;_gear<8;_gear++) {
         var _angle=_gear*45;
-        draw_line_width((_l+_r)/2+lengthdir_x(22,_angle),_t+48+lengthdir_y(22,_angle),
-            (_l+_r)/2+lengthdir_x(28,_angle),_t+48+lengthdir_y(28,_angle),5);
+        draw_line_width(_hx+lengthdir_x(22,_angle),_hy+lengthdir_y(22,_angle),
+            _hx+lengthdir_x(28,_angle),_hy+lengthdir_y(28,_angle),5);
     }
+    draw_text_transformed(_cx+34,_hy,"AJUSTES",1.9,1.9,0);
     draw_set_color(make_color_rgb(77,93,96));draw_rectangle(_l+42,_t+87,_r-42,_t+91,false);
-    var _ry=_t+157;
     for(var _row=0;_row<2;_row++) {
         var _cy=_t+157+_row*100;
         draw_set_color(global.settings_index==_row?make_color_rgb(234,196,112):make_color_rgb(75,93,99));
         draw_rectangle(_l+39,_cy-35,_r-39,_cy+35,false);
         draw_set_color(global.settings_index==_row?make_color_rgb(48,67,70):make_color_rgb(30,43,51));
         draw_rectangle(_l+43,_cy-31,_r-43,_cy+31,false);
+        if(global.settings_index==_row) {
+            draw_set_color(make_color_rgb(255,222,151));
+            draw_triangle(_l+34,_cy,_l+46,_cy-8,_l+46,_cy+8,false);
+        }
     }
-    if(global.settings_index==0) {
-        draw_set_color(make_color_rgb(255,222,151));
-        draw_triangle(_l+34,_ry,_l+46,_ry-8,_l+46,_ry+8,false);
-    }
+    var _ry=_t+157;
     draw_set_color(global.settings_index==0?make_color_rgb(255,222,151):make_color_rgb(200,208,204));
     draw_circle(_l+76,_ry+9,10,false);
     draw_line_width(_l+85,_ry+8,_l+85,_ry-28,6);
     draw_line_width(_l+85,_ry-28,_l+107,_ry-32,6);
+    draw_set_halign(fa_left);
+    draw_set_color(global.settings_index==0?make_color_rgb(245,232,201):make_color_rgb(176,192,184));
+    draw_text_transformed(_l+132,_ry,"MUSICA",1.2,1.2,0);
     draw_set_halign(fa_right);
     draw_set_color(global.audio_music_on?make_color_rgb(165,220,170):make_color_rgb(205,119,105));
+    draw_text_transformed(_r-142,_ry,global.audio_music_on?"LIGADA":"DESLIGADA",0.95,0.95,0);
     draw_roundrect(_r-124,_ry-19,_r-47,_ry+19,false);
     draw_set_color(make_color_rgb(27,38,44));
     draw_circle(global.audio_music_on?_r-69:_r-102,_ry,14,false);
     _ry=_t+257;
-    if(global.settings_index==1) {
-        draw_set_color(make_color_rgb(255,222,151));
-        draw_triangle(_l+34,_ry,_l+46,_ry-8,_l+46,_ry+8,false);
-    }
     draw_set_color(global.settings_index==1?make_color_rgb(255,222,151):make_color_rgb(200,208,204));
     draw_rectangle(_l+64,_ry-8,_l+77,_ry+8,false);
     draw_triangle(_l+77,_ry-8,_l+96,_ry-22,_l+96,_ry+22,false);
-    var _bar_l=_l+220;var _bar_r=_r-85;var _seg=10;var _gap=8;
+    draw_set_halign(fa_left);
+    draw_set_color(global.settings_index==1?make_color_rgb(245,232,201):make_color_rgb(176,192,184));
+    draw_text_transformed(_l+132,_ry,"SOM",1.2,1.2,0);
+    draw_set_halign(fa_right);
+    draw_set_color(global.settings_index==1?make_color_rgb(255,222,151):make_color_rgb(189,207,198));
+    draw_text_transformed(_l+210,_ry,string(round(global.audio_volume*100))+"%",1.0,1.0,0);
+    var _bar_l=_l+230;var _bar_r=_r-85;var _seg=10;var _gap=8;
     var _sw=(_bar_r-_bar_l-_gap*(_seg-1))/_seg;
     var _filled=round(global.audio_volume*_seg);
     for(var _s=0;_s<_seg;_s++) {
@@ -651,27 +681,29 @@ function scr_draw_settings() {
         draw_set_color(_s<_filled?make_color_rgb(232,190,106):make_color_rgb(56,68,78));
         draw_rectangle(_sx,_ry-10,_sx+_sw,_ry+10,false);
     }
-    draw_set_color(make_color_rgb(150,166,160));
-    draw_triangle(_l+44,_b-41,_l+58,_b-51,_l+58,_b-31,false);
-    draw_triangle(_r-44,_b-41,_r-58,_b-51,_r-58,_b-31,false);
-    draw_line_width((_l+_r)/2+15,_b-40,(_l+_r)/2-15,_b-40,4);
-    draw_line_width((_l+_r)/2-15,_b-40,(_l+_r)/2-5,_b-50,4);
-    draw_line_width((_l+_r)/2-15,_b-40,(_l+_r)/2-5,_b-30,4);
+    draw_set_color(make_color_rgb(77,93,96));draw_rectangle(_l+42,_b-72,_r-42,_b-68,false);
+    scr_ui_hint(_l+150,_b-40,"W S","NAVEGAR");
+    scr_ui_hint(_cx,_b-40,"A D","AJUSTAR");
+    scr_ui_hint(_r-150,_b-40,"ESC","VOLTAR");
     draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_color(c_white);
 }
 
 function scr_draw_title_menu() {
     draw_sprite_stretched(ChatGPT_Image_31_Oct_2026__02_56_25,0,0,-80,1366,1020);
     draw_set_alpha(0.76);draw_set_color(make_color_rgb(13,22,31));draw_rectangle(0,0,1366,768,false);draw_set_alpha(1);
+    scr_cut_glow(683,206,200,make_color_rgb(255,206,130),0.22);
     // Rebuilding motif: three ascending blocks and a tiny sprout behind the title.
     draw_set_color(make_color_rgb(64,82,84));
     for(var _i=0;_i<7;_i++)draw_rectangle(516+_i*45,115-abs(3-_i)*12,550+_i*45,142,false);
     draw_set_halign(fa_center);draw_set_valign(fa_middle);
     draw_set_color(make_color_rgb(9,17,24));draw_text_transformed(688,207,"TOGETHER",4.5,4.5,0);
     draw_set_color(make_color_rgb(242,211,151));draw_text_transformed(683,200,"TOGETHER",4.5,4.5,0);
+    draw_set_color(make_color_rgb(155,173,166));
+    draw_text_transformed(683,270,global.menu_stage==0?"ESCOLHA COMO JOGAR":"ESCOLHA SEU PERSONAGEM",1.25,1.25,0);
     if(global.menu_stage<2) {
         for(var _c=0;_c<2;_c++) {
             var _cx=497+_c*372;var _selected=(global.menu_stage==0?global.menu_mode:global.solo_character)==_c;
+            if(_selected)scr_cut_glow(_cx,470,170,make_color_rgb(232,190,106),0.16);
             scr_ui_panel(_cx-153,318,_cx+153,616,_selected);
             if(global.menu_stage==0) {
                 if(_c==0) {
@@ -686,23 +718,35 @@ function scr_draw_title_menu() {
                 draw_set_color(_c==0?make_color_rgb(80,220,215):make_color_rgb(247,181,77));
                 draw_rectangle(_cx-35,350,_cx+35,356,false);
             }
+            draw_set_halign(fa_center);draw_set_valign(fa_middle);
+            draw_set_color(_selected?make_color_rgb(255,222,151):make_color_rgb(148,166,158));
+            draw_text_transformed(_cx,592,
+                (global.menu_stage==0?(_c==0?"1 JOGADOR":"2 JOGADORES"):(_c==0?"CIANO":"AMBAR")),
+                1.15,1.15,0);
         }
-        // Direction triangles and one confirm glyph. Controls are documented outside the game.
+        // Direction triangles and the footer explain the keys without glyph-only buttons.
         draw_set_color(make_color_rgb(189,207,198));
         draw_triangle(288,452,306,438,306,466,false);draw_triangle(1078,452,1060,438,1060,466,false);
-        draw_circle(683,690,20,true);draw_triangle(678,680,678,700,691,690,false);
+        draw_set_alpha(0.55);draw_set_color(make_color_rgb(9,16,23));draw_rectangle(70,656,1296,760,false);draw_set_alpha(1);
+        draw_set_alpha(0.45);draw_set_color(make_color_rgb(232,190,106));draw_line_width(70,656,1296,656,2);draw_set_alpha(1);
+        scr_ui_hint(250,696,"A D","ESCOLHER");
+        scr_ui_hint(683,696,"E",global.menu_stage==0?"CONFIRMAR":"JOGAR");
         if(global.menu_stage==1) {
-            draw_line_width(330,692,354,692,3);draw_line_width(330,692,338,684,3);draw_line_width(330,692,338,700,3);
-        }
-        // A framed gear beside the main confirmation gives settings a clear place.
-        var _gx=1110;var _gy=688;
-        draw_set_color(make_color_rgb(9,17,24));draw_rectangle(_gx-37,_gy-31,_gx+41,_gy+39,false);
-        draw_set_color(make_color_rgb(232,190,106));draw_rectangle(_gx-40,_gy-35,_gx+36,_gy+35,false);
-        draw_set_color(make_color_rgb(30,42,50));draw_rectangle(_gx-35,_gy-30,_gx+31,_gy+30,false);
-        draw_set_color(make_color_rgb(218,230,211));draw_circle(_gx,_gy,15,true);draw_circle(_gx,_gy,6,true);
-        for(var _tooth=0;_tooth<8;_tooth++) {
-            var _a=_tooth*45;draw_line_width(_gx+lengthdir_x(18,_a),_gy+lengthdir_y(18,_a),
-                _gx+lengthdir_x(23,_a),_gy+lengthdir_y(23,_a),4);
+            scr_ui_hint(1078,696,"S","VOLTAR");
+        } else {
+            var _gx=1110;var _gy=690;
+            draw_set_color(make_color_rgb(9,17,24));draw_rectangle(_gx-37,_gy-31,_gx+41,_gy+39,false);
+            draw_set_color(make_color_rgb(232,190,106));draw_rectangle(_gx-40,_gy-35,_gx+36,_gy+35,false);
+            draw_set_color(make_color_rgb(30,42,50));draw_rectangle(_gx-35,_gy-30,_gx+31,_gy+30,false);
+            draw_set_color(make_color_rgb(218,230,211));draw_circle(_gx,_gy,15,true);draw_circle(_gx,_gy,6,true);
+            for(var _tooth=0;_tooth<8;_tooth++) {
+                var _a=_tooth*45;draw_line_width(_gx+lengthdir_x(18,_a),_gy+lengthdir_y(18,_a),
+                    _gx+lengthdir_x(23,_a),_gy+lengthdir_y(23,_a),4);
+            }
+            scr_ui_keycap(_gx+36,_gy-35,"S",0.95);
+            draw_set_halign(fa_center);draw_set_valign(fa_middle);
+            draw_set_color(make_color_rgb(200,214,204));
+            draw_text_transformed(_gx,_gy+54,"AJUSTES",0.95,0.95,0);
         }
     } else scr_draw_settings();
     draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_color(c_white);
@@ -874,4 +918,269 @@ function scr_blue_enemy_draw(_frame,_x,_y) {
     shader_set(shd_blue_cutout);
     draw_sprite_part_ext(spr_foguinho,0,_r[0],_r[1],_r[2],_r[3],round(_x-_r[2]*_scale/2),round(_y-96*_scale),_scale,_scale,c_white,1);
     shader_reset();
+}
+
+// Four 256 px cells share a baseline; the source already carries transparency.
+function scr_demon_draw(_frame,_x,_y) {
+    static _scale=0.42;
+    var _cell=256;
+    var _left=round(_x-140*_scale);
+    var _top=round(_y-120*_scale);
+    draw_sprite_part_ext(spr_demon_sheet,0,(_frame mod 4)*_cell,0,_cell,254,_left,_top,_scale,_scale,c_white,1);
+}
+
+// Foreground chasm: the ground strip already carries the bank art, so the void is cut over it in GUI space.
+function scr_draw_void() {
+    var _floor=scr_floor_y()-camera_y;
+    if(_floor>=768)return;
+    var _l=540;var _r=826;var _bottom=768;
+
+    draw_set_color(make_color_rgb(7,7,11));draw_rectangle(_l,_floor,_r,_bottom,false);
+    draw_set_color(make_color_rgb(16,13,18));draw_rectangle(_l+24,_floor+16,_r-24,_bottom,false);
+    draw_set_alpha(0.12);draw_set_color(make_color_rgb(132,72,48));draw_rectangle(_l+18,_floor+8,_r-18,_floor+74,false);draw_set_alpha(1);
+    draw_set_alpha(0.45);draw_set_color(make_color_rgb(4,4,7));draw_rectangle(_l+30,_floor+70,_r-30,_bottom,false);draw_set_alpha(1);
+
+    // Cross-section strata match the ground strip: stone lip, dirt, then dark rock.
+    static _bands=[
+        [4,15,13,14],[4,143,138,135],[8,100,95,92],[10,24,12,14],
+        [12,97,60,51],[8,66,39,28],[10,89,53,37],[8,61,48,42],
+        [18,36,31,40],[20,29,26,35],[18,20,18,24],[14,12,11,16]
+    ];
+    static _off=[0,3,1,5,2,6,0,4,2,5,1,3];
+    var _y=_floor;
+    for(var _i=0;_i<array_length(_bands);_i++) {
+        var _b=_bands[_i];var _h=_b[0];var _o=_off[_i];
+        var _lw=10+_o+(_i mod 2)*2;
+        var _rw=10+_off[(_i+3) mod array_length(_off)]+((_i+1) mod 2)*2;
+        draw_set_color(make_color_rgb(_b[1],_b[2],_b[3]));
+        draw_rectangle(_l,_y,_l+_lw,_y+_h,false);
+        draw_rectangle(_r-_rw,_y,_r,_y+_h,false);
+        draw_set_color(make_color_rgb(9,8,12));
+        draw_rectangle(_l+_lw-2,_y,_l+_lw,_y+_h,false);
+        draw_rectangle(_r-_rw,_y,_r-_rw+2,_y+_h,false);
+        _y+=_h;
+    }
+
+    // Broken lips overhanging the rim, using the same stone and dirt tones.
+    static _chunks=[
+        [0,0,16,4,143,138,135],[0,6,24,5,100,95,92],[0,14,12,8,97,60,51],
+        [0,30,20,6,66,39,28],[0,46,14,10,89,53,37],
+        [1,2,20,4,143,138,135],[1,9,12,6,100,95,92],[1,18,26,5,24,12,14],
+        [1,34,16,8,97,60,51],[1,52,22,6,61,48,42]
+    ];
+    for(var _c=0;_c<array_length(_chunks);_c++) {
+        var _ch=_chunks[_c];
+        draw_set_color(make_color_rgb(_ch[4],_ch[5],_ch[6]));
+        if(_ch[0]==0)draw_rectangle(_l-4,_floor+_ch[1],_l+_ch[2]-4,_floor+_ch[1]+_ch[3],false);
+        else draw_rectangle(_r-_ch[2]+4,_floor+_ch[1],_r+4,_floor+_ch[1]+_ch[3],false);
+    }
+
+    // Rubble ledges and warm rim light give the cut depth.
+    static _ledges=[[0.26,34,34,8],[0.68,74,44,9],[0.44,108,28,7]];
+    for(var _li=0;_li<array_length(_ledges);_li++) {
+        var _lg=_ledges[_li];
+        var _lx=_l+(_r-_l)*_lg[0];var _ly=_floor+_lg[1];
+        draw_set_color(make_color_rgb(17,15,20));draw_rectangle(_lx-_lg[2]/2,_ly,_lx+_lg[2]/2,_ly+_lg[3],false);
+        draw_set_color(make_color_rgb(51,43,54));draw_rectangle(_lx-_lg[2]/2,_ly,_lx+_lg[2]/2,_ly+2,false);
+        draw_set_alpha(0.30);draw_set_color(make_color_rgb(158,92,58));draw_rectangle(_lx-_lg[2]/2,_ly,_lx+_lg[2]/2,_ly+1,false);draw_set_alpha(1);
+    }
+
+    // Cracks and loose stones spread from the rim onto the banks.
+    draw_set_alpha(0.65);draw_set_color(make_color_rgb(22,16,18));
+    draw_line_width(_l-26,_floor+3,_l-6,_floor+12,2);
+    draw_line_width(_l-38,_floor+9,_l-10,_floor+18,2);
+    draw_line_width(_l-18,_floor+19,_l-4,_floor+28,2);
+    draw_line_width(_r+26,_floor+2,_r+8,_floor+11,2);
+    draw_line_width(_r+42,_floor+10,_r+12,_floor+17,2);
+    draw_line_width(_r+22,_floor+20,_r+6,_floor+27,2);
+    draw_set_alpha(1);
+    static _stones=[[0,-40,3,8,5],[0,-58,11,4,4],[0,-24,17,6,3],[1,34,4,8,5],[1,56,13,5,4],[1,22,19,6,3]];
+    for(var _s=0;_s<array_length(_stones);_s++) {
+        var _st=_stones[_s];
+        var _sx=(_st[0]==0?_l+_st[1]:_r+_st[1]);
+        var _sy=_floor+_st[2];
+        draw_set_color(make_color_rgb(17,13,16));draw_rectangle(_sx-1,_sy+_st[4]-1,_sx+_st[3]+1,_sy+_st[4]+1,false);
+        draw_set_color(make_color_rgb(78,68,67));draw_rectangle(_sx,_sy,_sx+_st[3],_sy+_st[4],false);
+        draw_set_color(make_color_rgb(122,111,105));draw_rectangle(_sx,_sy,_sx+_st[3],_sy+1,false);
+    }
+
+    // Low haze and slow embers rising out of the dark.
+    for(var _m=0;_m<4;_m++) {
+        draw_set_alpha(0.035+_m*0.03);draw_set_color(make_color_rgb(40,42,54));
+        draw_rectangle(_l+8,_floor+88+_m*12,_r-8,_floor+100+_m*12,false);
+    }
+    draw_set_alpha(1);
+    scr_cut_motes(global.game_timer,10,_l+20,_floor+20,_r-_l-40,110,make_color_rgb(255,178,104),0.35,17,0.28);
+
+    draw_set_alpha(0.45);draw_set_color(make_color_rgb(198,124,78));
+    draw_rectangle(_l,_floor,_l+14,_floor+2,false);
+    draw_rectangle(_r-14,_floor,_r,_floor+2,false);
+    draw_set_alpha(1);
+    draw_set_color(c_white);
+}
+
+function scr_begin_pause() {
+    global.game_state="pause";
+    global.pause_index=0;
+    global.pause_stage=0;
+    global.pause_timer=0;
+    global.pause_guard=0;
+    scr_sfx(sfx_ui_back,0,0.8);
+    window_set_cursor(cr_default);
+}
+
+function scr_resume_game() {
+    global.game_state="play";
+    global.pause_stage=0;
+    global.pause_guard=3;
+    scr_sfx(sfx_ui_confirm);
+    window_set_cursor(cr_default);
+}
+
+function scr_pause_option_rect(_index) {
+    var _l=466;var _r=900;var _top=252;var _h=62;var _gap=14;
+    var _y=_top+_index*(_h+_gap);
+    return [_l,_y,_r,_y+_h];
+}
+
+function scr_pause_select(_choice) {
+    if(_choice==0) { scr_resume_game(); return; }
+    if(_choice==1) {
+        global.pause_stage=1;
+        global.settings_index=0;
+        scr_sfx(sfx_ui_confirm);
+        return;
+    }
+    if(_choice==2) {
+        global.game_state="play";
+        global.game_timer=0;
+        global.pause_stage=0;
+        global.pause_guard=3;
+        window_set_cursor(cr_default);
+        scr_sfx(sfx_ui_confirm);
+        room_restart();
+        return;
+    }
+    window_set_cursor(cr_default);
+    scr_sfx(sfx_ui_back);
+    scr_return_to_title();
+}
+
+function scr_pause_input() {
+    if(global.pause_stage==1) {
+        var _vert = (keyboard_check_pressed(ord("W")) || keyboard_check_pressed(vk_up))
+            - (keyboard_check_pressed(ord("S")) || keyboard_check_pressed(vk_down));
+        var _horiz = (keyboard_check_pressed(ord("D")) || keyboard_check_pressed(vk_right))
+            - (keyboard_check_pressed(ord("A")) || keyboard_check_pressed(vk_left));
+        if(_vert!=0) {
+            global.settings_index=1-global.settings_index;
+            scr_sfx(sfx_ui_move);
+        }
+        if(_horiz!=0) {
+            if(global.settings_index==0) {
+                scr_audio_music_toggle();
+                scr_sfx(sfx_ui_confirm);
+            } else {
+                scr_audio_volume(0.1*_horiz);
+                scr_sfx(sfx_ui_move);
+            }
+        }
+        if(keyboard_check_pressed(vk_escape)||keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)) {
+            global.pause_stage=0;
+            scr_sfx(sfx_ui_back);
+        }
+        return;
+    }
+    if(keyboard_check_pressed(vk_escape)||keyboard_check_pressed(ord("P"))) {
+        scr_resume_game();
+        return;
+    }
+    var _mx=device_mouse_x_to_gui(0);
+    var _my=device_mouse_y_to_gui(0);
+    var _hover=-1;
+    for(var _i=0;_i<4;_i++) {
+        var _r=scr_pause_option_rect(_i);
+        if(point_in_rectangle(_mx,_my,_r[0],_r[1],_r[2],_r[3]))_hover=_i;
+    }
+    if(_hover!=-1)window_set_cursor(cr_handpoint);
+    else window_set_cursor(cr_default);
+    if(_hover!=-1 && _hover!=global.pause_index) {
+        global.pause_index=_hover;
+        scr_sfx(sfx_ui_move);
+    }
+    var _nav=(keyboard_check_pressed(ord("S"))||keyboard_check_pressed(vk_down))-(keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up));
+    if(_nav!=0) {
+        global.pause_index=(global.pause_index+_nav+4) mod 4;
+        scr_sfx(sfx_ui_move);
+    }
+    var _click=mouse_check_button_pressed(mb_left) && _hover!=-1;
+    var _confirm=keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter);
+    if(!_click && !_confirm)return;
+    if(_click)global.pause_index=_hover;
+    scr_pause_select(global.pause_index);
+}
+
+function scr_pause_icon(_kind,_x,_y,_col) {
+    draw_set_color(_col);
+    if(_kind==0) {
+        draw_triangle(_x-7,_y-12,_x-7,_y+12,_x+11,_y,false);
+    } else if(_kind==1) {
+        draw_circle(_x,_y,11,true);
+        draw_circle(_x,_y,4,true);
+        for(var _i=0;_i<8;_i++) {
+            var _a=_i*45;
+            draw_line_width(_x+lengthdir_x(13,_a),_y+lengthdir_y(13,_a),_x+lengthdir_x(18,_a),_y+lengthdir_y(18,_a),3);
+        }
+    } else if(_kind==2) {
+        draw_circle(_x,_y,12,true);
+        draw_triangle(_x+3,_y-18,_x+17,_y-15,_x+10,_y-4,false);
+    } else {
+        draw_rectangle(_x-9,_y-13,_x+9,_y+13,true);
+        draw_circle(_x+4,_y,2,false);
+    }
+}
+
+function scr_draw_pause() {
+    draw_set_alpha(0.74);
+    draw_set_color(make_color_rgb(8,13,20));
+    draw_rectangle(0,0,1366,768,false);
+    draw_set_alpha(1);
+    if(global.pause_stage==1) { scr_draw_settings(); return; }
+    var _l=423;var _t=126;var _r=943;var _b=628;var _cx=683;
+    draw_set_color(make_color_rgb(8,13,20));draw_rectangle(_l+9,_t+9,_r+9,_b+9,false);
+    draw_set_color(make_color_rgb(232,190,106));draw_rectangle(_l,_t,_r,_b,false);
+    draw_set_color(make_color_rgb(27,38,48));draw_rectangle(_l+4,_t+4,_r-4,_b-4,false);
+    scr_cut_glow(_cx,_t+66,150+sin(global.pause_timer/20)*10,make_color_rgb(255,206,130),0.18);
+    var _ix=_cx-92;var _iy=_t+64;
+    draw_set_color(make_color_rgb(245,232,201));
+    draw_roundrect(_ix-14,_iy-22,_ix-4,_iy+22,false);
+    draw_roundrect(_ix+4,_iy-22,_ix+14,_iy+22,false);
+    draw_set_halign(fa_center);draw_set_valign(fa_middle);
+    draw_text_transformed(_cx+18,_iy,"PAUSA",2.0,2.0,0);
+    draw_set_color(make_color_rgb(77,93,96));draw_rectangle(_l+46,_t+108,_r-46,_t+112,false);
+    for(var _i=0;_i<4;_i++) {
+        var _rect=scr_pause_option_rect(_i);
+        var _orl=_rect[0];var _ort=_rect[1];var _orr=_rect[2];var _orb=_rect[3];
+        var _sel=global.pause_index==_i;
+        draw_set_color(make_color_rgb(10,15,22));draw_rectangle(_orl+4,_ort+4,_orr+4,_orb+4,false);
+        draw_set_color(_sel?make_color_rgb(232,190,106):make_color_rgb(58,72,80));
+        draw_rectangle(_orl,_ort,_orr,_orb,false);
+        draw_set_color(_sel?make_color_rgb(43,57,65):make_color_rgb(24,34,43));
+        draw_rectangle(_orl+3,_ort+3,_orr-3,_orb-3,false);
+        var _cy=(_ort+_orb)/2;
+        var _col=_sel?make_color_rgb(255,222,151):make_color_rgb(155,173,166);
+        scr_pause_icon(_i,_orl+40,_cy,_col);
+        draw_set_halign(fa_left);draw_set_valign(fa_middle);
+        draw_set_color(_sel?make_color_rgb(245,232,201):make_color_rgb(168,184,176));
+        draw_text_transformed(_orl+82,_cy+1,["CONTINUAR","AJUSTES","REINICIAR","SAIR PARA O MENU"][_i],1.15,1.15,0);
+        if(_sel) {
+            draw_set_color(make_color_rgb(255,222,151));
+            draw_triangle(_orr-30,_cy,_orr-42,_cy-9,_orr-42,_cy+9,false);
+        }
+    }
+    draw_set_color(make_color_rgb(77,93,96));draw_rectangle(_l+46,_b-66,_r-46,_b-62,false);
+    scr_ui_hint(_l+112,_b-34,"W S","NAVEGAR");
+    scr_ui_hint(_cx+12,_b-34,"E","CONFIRMAR");
+    scr_ui_hint(_r-110,_b-34,"ESC","CONTINUAR");
+    draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_color(c_white);
 }

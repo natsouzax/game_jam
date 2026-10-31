@@ -1,0 +1,13 @@
+hp=2;
+state=0;
+attack_timer=irandom_range(240,420);
+target=noone;
+target_x=x;
+target_y=y;
+start_x=x;
+start_y=y;
+base_y=y;
+attack_progress=0;
+attack_duration=90;
+depth=-4;
+hover_phase=random(pi*2);

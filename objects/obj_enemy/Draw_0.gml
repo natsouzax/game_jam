@@ -1,4 +1,4 @@
-if(global.game_state!="play")exit;
+if(global.game_state!="play" && global.game_state!="pause")exit;
 switch(kind) {
     case 0: {
         var _duck_bob=round(abs(sin(global.game_timer*0.35))*2);

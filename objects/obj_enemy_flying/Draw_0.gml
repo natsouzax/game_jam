@@ -1,4 +1,4 @@
-if(global.game_state!="play")exit;
+if(global.game_state!="play" && global.game_state!="pause")exit;
 // Three hovering poses, then two attack poses; the source has five unequal cells.
 var _frame=(state==0?(global.game_timer div 9) mod 3:3+(global.game_timer div 7) mod 2);
 scr_blue_enemy_draw(_frame,x,y);

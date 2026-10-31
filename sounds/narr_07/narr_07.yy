@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":3.816000,
+  "duration":3.816,
   "exportDir":"",
   "name":"narr_07",
   "parent":{

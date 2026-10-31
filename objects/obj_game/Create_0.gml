@@ -1,7 +1,16 @@
 global.qa_regression=false;
+global.boot_test=false;
 qa_regression_stage=0;qa_regression_hold=0;
 global.qa_skip_ending=false;
 if (!variable_global_exists("game_state")) global.game_state="title";
+if (!variable_global_exists("boot_seen")) {
+    global.boot_seen=true;
+    global.game_state="studio";
+    global.game_timer=0;
+}
+global.boot_video_started=false;
+global.boot_video_was_playing=false;
+global.boot_video_error=false;
 if (!variable_global_exists("game_timer")) global.game_timer=0;
 if (!variable_global_exists("menu_mode")) { global.menu_mode=1; global.menu_stage=0; global.solo_character=0; global.player_count=2; }
 if (!variable_global_exists("intro_seen")) global.intro_seen=[false,false,false];
@@ -23,16 +32,21 @@ for(var _a=1;_a<=parameter_count();_a++) {
     if(_arg=="--qa-recovery"){global.qa=true;global.qa_recovery_test=true;}
     if(_arg=="--qa-solo1"){global.qa=true;global.qa_solo=0;}
     if(_arg=="--qa-solo2"){global.qa=true;global.qa_solo=1;}
+    if(_arg=="--boot-test")global.boot_test=true;
 }
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
+if(global.qa && (global.game_state=="studio" || global.game_state=="video")) global.game_state="title";
 if(global.qa)display_reset(0,false);
 random_set_seed(global.qa ? 7231 : current_time);
 scr_audio_init();
-scr_screen_music(global.game_state);
+if(global.game_state=="studio" || global.game_state=="video")scr_music_stop();
+else scr_screen_music(global.game_state);
 spawn_timer=120;spawn_side=0;ending_timer=0;camera_y=room_height-768;bg_y=camera_y;altitude=0;depth=400;
 if (!variable_global_exists("gameover_choice")) global.gameover_choice=0;
 global.gameover_timer=0;
+global.pause_index=0;global.pause_stage=0;global.pause_timer=0;global.pause_guard=0;
 life_spawn_timer=irandom_range(300,600);
+hazard_timer=150;
 global.death_window_timer=0;
 global.restart_game=false;
 // tower platforms with gap
@@ -47,6 +61,9 @@ if (_room_name=="Room1") {
     _e1.home_y = _e1.y;
     var _e2=instance_create_layer(1040, scr_floor_y()-200, "Instances_1", obj_enemy_flying);
     _e2.home_y = _e2.y;
+} else if (_room_name=="Room2") {
+    // Second stage: the demon patrols the sky above the city.
+    instance_create_layer(683, 640, "Instances_1", obj_demon);
 }
 display_set_gui_size(1366,768);gpu_set_texfilter(false);
 view_enabled=true;view_visible[0]=true;cam=view_camera[0];camera_set_view_size(cam,1366,768);camera_set_view_pos(cam,0,camera_y);
@@ -57,4 +74,4 @@ if(global.qa && !global.qa_section_test) {
         _qb.solid_width=320;_qb.solid_height=20;_qb.is_checkpoint=true;_qb.level_id=0;
     }
 }
-window_set_caption("JUNTOS");
+window_set_caption("TOGETHER");

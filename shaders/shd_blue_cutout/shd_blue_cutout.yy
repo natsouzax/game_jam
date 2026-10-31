@@ -1,12 +1,12 @@
 {
-  "$GMShader": "",
-  "%Name": "shd_blue_cutout",
-  "name": "shd_blue_cutout",
-  "parent": {
-    "name": "enemies",
-    "path": "folders/enemies.yy"
+  "$GMShader":"",
+  "%Name":"shd_blue_cutout",
+  "name":"shd_blue_cutout",
+  "parent":{
+    "name":"enemies",
+    "path":"folders/enemies.yy",
   },
-  "resourceType": "GMShader",
-  "resourceVersion": "2.0",
-  "type": 1
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
 }
