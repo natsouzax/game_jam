@@ -1,5 +1,9 @@
-﻿if (y < ground_y) {
-    fall_speed = min(fall_speed + gravity_speed, 12);
-    y = min(y + fall_speed, ground_y);
-    if (y >= ground_y) fall_speed = 0;
+fall_speed = min(fall_speed + gravity_speed, 12);
+var _next_y = y + fall_speed;
+var _landing_y = scr_world_landing_surface(x - 18, x + 18, y + 18, _next_y + 18);
+if (_landing_y != noone) {
+    y = _landing_y - 18;
+    fall_speed = 0;
+} else if (!scr_world_aabb_solid(x - 18, _next_y - 18, x + 18, _next_y + 18)) {
+    y = _next_y;
 }

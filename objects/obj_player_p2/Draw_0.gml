@@ -1,13 +1,22 @@
 var frame_w = 1774 / 6;
-var frame_h = 444;
+var frame_h = 432;
 var draw_x = x - 40 * facing;
 var draw_scale_x = 0.27 * facing;
 var moving = keyboard_check(vk_left) || keyboard_check(vk_right);
 if (y < ground_y - 1) {
-    draw_sprite_part_ext(spr_player2_sheet_1, 0, 590, 440, 330, 440, draw_x, y - 88, draw_scale_x, 0.27, c_white, 1);
+    draw_sprite_part_ext(spr_player2_sheet_1, 0, 590, 440, 330, 440, draw_x, y - 116, draw_scale_x, 0.27, c_white, 1);
 } else if (moving) {
     var frame = floor(current_time / 110) mod 6;
-    draw_sprite_part_ext(spr_player2_sheet_1, 0, frame * frame_w, 0, frame_w, frame_h, draw_x, y - 88, draw_scale_x, 0.27, c_white, 1);
+    draw_sprite_part_ext(spr_player2_sheet_1, 0, frame * frame_w, 0, frame_w, frame_h, draw_x, y - 116, draw_scale_x, 0.27, c_white, 1);
 } else {
-    draw_sprite_part_ext(spr_player2_sheet_1, 0, 0, 0, frame_w, frame_h, draw_x, y - 88, draw_scale_x, 0.27, c_white, 1);
+    draw_sprite_part_ext(spr_player2_sheet_1, 0, 0, 0, frame_w, frame_h, draw_x, y - 116, draw_scale_x, 0.27, c_white, 1);
 }
+
+draw_set_color(make_color_rgb(173, 65, 238));
+for (var i = 0; i < material_count; i++) {
+    var icon_x = x + (i - (material_count - 1) * 0.5) * 14;
+    var icon_y = y - 126;
+    draw_triangle(icon_x, icon_y - 5, icon_x + 5, icon_y, icon_x - 5, icon_y, false);
+    draw_triangle(icon_x, icon_y + 5, icon_x + 5, icon_y, icon_x - 5, icon_y, false);
+}
+draw_set_color(c_white);

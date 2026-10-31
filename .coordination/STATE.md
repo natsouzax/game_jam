@@ -74,3 +74,24 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Novo sprite `spr_ruins_bg` com PNG no projeto, registrado em gameJam.yyp. `obj_proto/Draw_0.gml` o desenha como fundo esticado para Room1; jogadores temporários receberam contorno para contraste. `obj_proto/Create_0.gml` desliga filtragem de textura.
 - Igor `windows Compile` com runtime 2026.0.0.23 concluiu com `Igor complete`, exit code 0, após as mudanças. A execução visual no GameMaker ainda precisa de validação humana.
 - Alteração local pré-existente em options/main/options_main.yy permaneceu intacta. Nenhum agente, push, merge ou publicação nesta etapa.
+
+## Queda e coleta de materiais ? 2026-10-31
+
+- Decis?es confirmadas pelo usu?rio: coleta autom?tica ao encostar; invent?rio individual por jogador; uma ?nica pe?a cai por vez, e fica no ch?o at? ser recolhida.
+- Implementado diretamente no workspace atual: P1 controla a gera??o; cada jogador possui `material_count`; qualquer um coleta a pe?a mais pr?xima dentro da ?rea de contato; os estoques s?o indicados por losangos roxos sem n?meros/texto.
+- Proposta provis?ria do agente: gerar a primeira pe?a imediatamente, depois aguardar 3 segundos ap?s a anterior ser coletada; sortear a posi??o horizontal. Esses valores podem ser ajustados ap?s teste e n?o foram definidos separadamente pelo usu?rio.
+- Arquivos alterados: `objects/obj_player_p1/{Create_0,Step_0,Draw_0}.gml` e `objects/obj_player_p2/{Create_0,Step_0,Draw_0}.gml`. Sem edi??o de `gameJam.yyp` ou `rooms/Room1/Room1.yy` nesta tarefa.
+- Verifica??o: `git diff --check` sem erros (aviso existente de normaliza??o CRLF em `objects/fire/Draw_0.gml`); Igor runtime GameMaker 2026.0.0.23 `windows Compile` terminou com exit code 0 / `Igor complete`.
+- Orca 1.4.245 revalidado: runtime ready/connected; terminais da pasta do projeto vis?veis; `run-current` nulo. OpenCode informou 0 credenciais no auth local. Nenhum executor lan?ado: quota gratuita/modelo eleg?vel n?o foi confirmado, e as altera??es locais em `master` tornam um worktree criado a partir do HEAD inadequado sem snapshot fiel. Codex implementou a pequena integra??o nos arquivos de eventos atuais; nenhuma sess?o existente foi encerrada.
+- Falta executar visualmente: verificar a queda, coleta individual dos dois jogadores e leitura dos ?cones na cena. Nenhum commit, push, merge ou publica??o.
+
+## Chao real, colisao e construcao em blocos ? 2026-10-31
+
+- Decisoes do usuario: cada bloco consome 1 material; o bloco aparece diretamente a frente do personagem, no lado para o qual esta virado. Sem mouse.
+- Proposta aplicada: grade de 32 px, bloco de 32x32, uma acao por pressionamento (P1 E / P2 Enter, conforme controles anteriormente reservados). Bloco fica uma celula acima dos pes; alvo ocupado ou fora da sala nao consome material. Aparencia provisoria de pedra/entulho. O conteudo e o movimento podem ser ajustados apos teste.
+- Estrutura OOP/GameMaker: `obj_world_solid` e pai; `obj_ground` e `obj_build_block` sao filhos. Room1 ganhou instancia fisica invisivel do chao em y=672. Jogadores colidem com estas instancias por AABB; materiais pousam na superficie mais alta encontrada. Cada bloco construido e uma instancia no layer `Instances_1`.
+- Controles: movimento/jump preservados; inventario segue individual; E/Enter constroem. Blocos sao compartilhados no mundo.
+- Draw do P1 tinha uma linha local incompleta que referia `spr_player1_idle`; preservei a intencao e conclui a animacao ociosa usando as quatro celulas 2x2. O erro de sintaxe foi a causa da primeira compilacao falhar; compilacao seguinte passou.
+- Arquivos criados: `folders/world.yy`; `objects/obj_world_solid/*`; `objects/obj_ground/*`; `objects/obj_build_block/*`; `scripts/scr_world_collision/*`. Arquivos registrados/alterados: `gameJam.yyp`, `rooms/Room1/Room1.yy`, Steps/Create/Draw dos jogadores, Create/Step do material, Draw P1.
+- Verificacao: Igor com runtime GameMaker 2026.0.0.23 `windows Compile` terminou com exit code 0 e `Igor complete`. Runtime Runner estava aberto minimizado; nao o trouxe para frente. Falta conferir visualmente queda, coleta, gasto de material, encaixe, colisao e subida.
+- Orca: nenhum executor foi iniciado nesta tarefa; nao foi selecionado provedor sem saldo/custo gratuito verificavel. Alteracoes locais em `master` preservadas; nenhum commit, push, merge ou publicacao.
