@@ -4,7 +4,10 @@
   "isCompatibility":false,
   "isDnD":false,
   "name":"scr_world_collision",
-  "parent":{"name":"world","path":"folders/world.yy",},
+  "parent":{
+    "name":"world",
+    "path":"folders/world.yy",
+  },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
 }

@@ -9,7 +9,10 @@
   "managed":true,
   "name":"obj_enemy_flying",
   "overriddenProperties":[],
-  "parent":{"name":"enemies","path":"folders/enemies.yy",},
+  "parent":{
+    "name":"enemies",
+    "path":"folders/enemies.yy",
+  },
   "parentObjectId":null,
   "persistent":false,
   "physicsAngularDamping":0.1,

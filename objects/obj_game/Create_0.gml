@@ -36,11 +36,12 @@ var _ls=instance_create_layer(0,_floor,"Instances_1",obj_world_solid);
 _ls.solid_width=540;_ls.solid_height=128;
 var _rs=instance_create_layer(826,_floor,"Instances_1",obj_world_solid);
 _rs.solid_width=540;_rs.solid_height=128;
-// enemies from room 3
 var _room_name=room_get_name(room);
-if (_room_name=="Room3" || _room_name=="Room4" || _room_name=="Room5" || _room_name=="Room6") {
-    instance_create_layer(672, 1200, "Instances_1", obj_enemy);
-    instance_create_layer(900, 700, "Instances_1", obj_enemy_flying);
+if (_room_name=="Room1") {
+    var _e1=instance_create_layer(720, scr_floor_y()-40, "Instances_1", obj_enemy);
+    _e1.home_y = _e1.y;
+    var _e2=instance_create_layer(1040, scr_floor_y()-200, "Instances_1", obj_enemy_flying);
+    _e2.home_y = _e2.y;
 }
 display_set_gui_size(1366,768);gpu_set_texfilter(false);
 view_enabled=true;view_visible[0]=true;cam=view_camera[0];camera_set_view_size(cam,1366,768);camera_set_view_pos(cam,0,camera_y);

@@ -4,9 +4,10 @@ var _start = room_height - _view_h;
 var _climbed = max(0, _start - camera_y);
 var _altitude = clamp(_climbed / max(1, _start), 0, 1);
 altitude = _altitude;
-var _follow = lerp(0.82, 0.4, _altitude);
-var _target = _start - _climbed * _follow;
-bg_y = lerp(bg_y, _target, lerp(0.028, 0.01, _altitude));
+var _follow = lerp(0.12, 0.04, _altitude);
+// Background moves slowly downward as the player climbs (opposite to the camera).
+var _target = _start + _climbed * 0.16;
+bg_y = lerp(bg_y, _target, lerp(0.01, 0.004, _altitude));
 
 var _top = camera_y - 48;
 var _bottom = camera_y + _view_h + 48;

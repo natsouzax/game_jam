@@ -9,7 +9,10 @@
   "managed":true,
   "name":"obj_life_item",
   "overriddenProperties":[],
-  "parent":{"name":"world","path":"folders/world.yy",},
+  "parent":{
+    "name":"world",
+    "path":"folders/world.yy",
+  },
   "parentObjectId":null,
   "persistent":false,
   "physicsAngularDamping":0.1,

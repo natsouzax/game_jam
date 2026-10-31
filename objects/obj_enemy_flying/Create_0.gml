@@ -1,4 +1,4 @@
-hp=3;
+hp=1;
 state=0;
 attack_timer=7*60;
 target=noone;
@@ -7,7 +7,7 @@ target_y=y;
 start_x=x;
 start_y=y;
 attack_progress=0;
-attack_duration=60;
+attack_duration=120;
 base_y=y;
 depth=-4;
 hover_phase=0;

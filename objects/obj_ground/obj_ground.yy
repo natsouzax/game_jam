@@ -1,12 +1,20 @@
 {
   "$GMObject":"",
   "%Name":"obj_ground",
-  "eventList":[{"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",}],
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
   "name":"obj_ground",
   "overriddenProperties":[],
-  "parent":{"name":"world","path":"folders/world.yy",},
-  "parentObjectId":{"name":"obj_world_solid","path":"objects/obj_world_solid/obj_world_solid.yy",},
+  "parent":{
+    "name":"world",
+    "path":"folders/world.yy",
+  },
+  "parentObjectId":{
+    "name":"obj_world_solid",
+    "path":"objects/obj_world_solid/obj_world_solid.yy",
+  },
   "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,

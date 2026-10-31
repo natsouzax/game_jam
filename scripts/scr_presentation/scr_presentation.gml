@@ -42,9 +42,19 @@ function scr_player_controls() {
     if(!active_player)return;
     if(dead)return;
     if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2],false);}
-    else if(global.player_count==1 || player_number==0)
-        scr_player_tick(keyboard_check(ord("D"))-keyboard_check(ord("A")),keyboard_check_pressed(ord("W")),keyboard_check_pressed(ord("E")),keyboard_check(ord("W")));
-    else scr_player_tick(keyboard_check(vk_right)-keyboard_check(vk_left),keyboard_check_pressed(vk_up),keyboard_check_pressed(vk_enter),keyboard_check(vk_up));
+    else if(global.player_count==1 || player_number==0) {
+        var _mv = keyboard_check(ord("D"))-keyboard_check(ord("A"));
+        var _jp = keyboard_check_pressed(ord("W"));
+        var _jh = keyboard_check(ord("W"));
+        var _bl = keyboard_check_pressed(ord("E"));
+        scr_player_tick(_mv,_jp,_bl,_jh);
+    } else {
+        var _mv2 = keyboard_check(vk_right)-keyboard_check(vk_left);
+        var _jp2 = keyboard_check_pressed(vk_up);
+        var _jh2 = keyboard_check(vk_up);
+        var _bl2 = keyboard_check_pressed(vk_enter);
+        scr_player_tick(_mv2,_jp2,_bl2,_jh2);
+    }
 }
 
 function scr_ui_panel(_l,_t,_r,_b,_selected) {
