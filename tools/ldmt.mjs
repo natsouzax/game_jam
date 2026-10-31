@@ -1,5 +1,23 @@
 ﻿import fs from 'node:fs/promises';
 import {FileBlob,SpreadsheetFile} from '@oai/artifact-tool';
+if(process.argv.includes('--visual-v2')) {
+ const wb=await SpreadsheetFile.importXlsx(await FileBlob.load('delivery/documents/LDMT_JUNTOS_Final.xlsx'));
+ const revision={Overview:{F6:'MVP Final 3'},Segments:{
+  F9:'Selecionar modo/personagem',G9:'Menu visual; ruinas, artefato e chamado divino sem palavras.',
+  K9:'Revisao: arte simplificada aprovada; menu solo/coop e escolha do personagem no solo; abertura de tres momentos.',
+  F13:'Chegada dos participantes',G13:'Todos os ativos pousam no topo: um no solo, dois no cooperativo.',
+  K13:'Testes Runner: coop e solo com cada personagem; coleta/construcao, topo e reinicio. Inativo nao joga.'
+ },'Level Map':{F9:'Selecao de modo/personagem e abertura visual',F21:'Pouso de todos os participantes ativos'}};
+ for(const [sheet,cells] of Object.entries(revision))for(const [addr,value] of Object.entries(cells))wb.worksheets.getItem(sheet).getRange(addr).values=[[value]];
+ await wb.recalculate();
+ await fs.mkdir('tools/tmp',{recursive:true});
+ await (await SpreadsheetFile.exportXlsx(wb)).save('tools/tmp/LDMT_visual_artifact.xlsx');
+ await fs.writeFile('tools/ldmt_visual_v2_edits.json',JSON.stringify(revision,null,2));
+ const preview=await wb.render({sheetName:'Segments',range:'C8:G14',scale:1,format:'png'});
+ await fs.writeFile('tools/tmp/LDMT_visual_preview.png',new Uint8Array(await preview.arrayBuffer()));
+ console.log((await wb.inspect({kind:'region',sheetId:'Segments',range:'C9:G14',maxChars:1500})).ndjson);
+ process.exit(0);
+}
 const source='C:/Users/natan/OneDrive/Documentos/ChatGPT/GameJam/LDMT_Game_Jam.xlsx';
 const wb=await SpreadsheetFile.importXlsx(await FileBlob.load(source));
 const edits={};

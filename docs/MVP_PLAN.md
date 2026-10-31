@@ -1,4 +1,4 @@
-﻿# MVP fechado — JUNTOS
+# MVP fechado — JUNTOS
 
 Base: 938089d (ESTÁGIO 3), branch jam/mvp-complete. Responsável pela integração: Codex. Natan/Guilherme continuam a partir desta branch ou recebem commits revisáveis; não editar gameJam.yyp em paralelo.
 
@@ -13,3 +13,7 @@ Propriedade de arquivos: integração em objects/, scripts/, gameJam.yyp e Room1
 Fontes: Halloween_Game_Jam_Abertura_2026.pdf (p.6 originalidade, p.11 build+LDMT, p.16 sidequests); LDMT_Game_Jam_Tutorial.pdf (cópia inicial, IDs/fórmulas intactos, revisão após teste). Originais em C:/Users/natan/OneDrive/Documentos/ChatGPT/GameJam.
 
 Pesos de planejamento propostos pelo coordenador, não dados empíricos: contexto 0, trecho de construção +1, encontro móvel +2, recuperação -1. Unidade é um trecho/encontro, não quantidade ilimitada de blocos ou gotas. Guardar plano antes do primeiro teste e revisão após observações reais.
+
+## Revisao de apresentacao v2
+
+Direcao de arte simplificada aprovada por Natan; implementacao em8a7f3bd. Menu solo/coop, escolha do personagem no solo, abertura de tres momentos sem texto. Fisica e torre preservadas; ativos determinam suprimento/camera/vitoria. Plano inicial e pesos LDMT conservados; Final registra revisao textual. Decisoes e aceitacao em VISUAL_V2.md.

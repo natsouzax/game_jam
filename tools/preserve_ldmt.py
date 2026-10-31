@@ -5,6 +5,25 @@ from zipfile import ZipFile,ZIP_DEFLATED
 src=Path(r'C:\Users\natan\OneDrive\Documentos\ChatGPT\GameJam\LDMT_Game_Jam.xlsx');data=json.loads(Path('tools/ldmt_edits.json').read_text())
 NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';q=lambda n:'{'+NS+'}'+n
 
+if '--visual-v2' in sys.argv:
+ # Artifact Tool authored these text-only changes; preserve native package parts/caches.
+ revision=json.loads(Path('tools/ldmt_visual_v2_edits.json').read_text())
+ target=Path('delivery/documents/LDMT_JUNTOS_Final.xlsx')
+ with ZipFile(target) as z:parts={n:z.read(n) for n in z.namelist()}
+ for idx,sh in enumerate(['Overview','Segments','Elements','Level Map'],1):
+  if sh not in revision:continue
+  name=f'xl/worksheets/sheet{idx}.xml';tree=E.fromstring(parts[name]);cells={c.get('r'):c for c in tree.iter(q('c'))}
+  for addr,value in revision[sh].items():
+   cell=cells[addr]
+   assert cell.find(q('f')) is None, f'Revision cannot replace a formula: {sh}!{addr}'
+   for child in list(cell):cell.remove(child)
+   cell.set('t','inlineStr');E.SubElement(E.SubElement(cell,q('is')),q('t')).text=value
+  parts[name]=E.tostring(tree,encoding='utf-8',xml_declaration=True)
+ with ZipFile(target,'w',ZIP_DEFLATED) as z:
+  for n,b in parts.items():z.writestr(n,b)
+ print('Visual revision applied; Plan, formulas, IDs, weights and native package retained')
+ sys.exit(0)
+
 def colnum(s):
  n=0
  for c in s:n=n*26+ord(c)-64

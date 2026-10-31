@@ -7,6 +7,10 @@ sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest().upper()
 normal=json.loads((D/'tests/qa_result.json').read_text(encoding='utf-8-sig'))
 recovery=json.loads((D/'tests/qa_recovery_result.json').read_text(encoding='utf-8-sig'))
 section=json.loads((D/'tests/qa_section_reset_result.json').read_text(encoding='utf-8-sig'))
+solos=[json.loads((D/f'tests/qa_solo{i}_result.json').read_text(encoding='utf-8-sig')) for i in (1,2)]
+for index,s in enumerate(solos):
+ assert s['passed'] and s['restarted'] and s['menu_ok'] and s['intro_all_scenes'] and s['inactive_untouched']
+ assert s['players']==1 and s['solo_character']==index and s['data_sha256']==sha(D/'windows/data.win')
 assert section['passed'] and section['data_sha256']==sha(D/'windows/data.win')
 for report in [normal,recovery]:
  assert report['passed'] and report['restarted']
@@ -58,12 +62,34 @@ Apenas uma chamada draw_text existe no jogo, com o titulo JUNTOS. Multiplayer e 
 
 Nao houve rodada com duas pessoas nem teste de ghosting, conforto, clareza narrativa ou diversao. Nao houve teste em outro PC limpo. Antes de apresentar: extrair ZIP, ambos confirmam com W/Cima, cada um coleta e constroi, saltar nos blocos, deixar um parceiro para tras, tocar a patrulha, recuperar, ambos pousar no topo e reiniciar. Em teclado com ghosting, usar teclado USB que aceite as combinacoes. Sem publicacao ou envio automatico.
 '''
+report=report.replace('Entrada do titulo, introducao,','Menu de modo/personagem, tres cenas da abertura,')
+report=report.replace('A API de controle da interface ficou indisponivel (native pipe), portanto nao foi feito teste final com teclas fisicas.','As entradas foram automaticas; nao houve teste final com teclas fisicas nesta revisao.')
+report=report.replace('Apenas uma chamada draw_text existe no jogo, com o titulo JUNTOS.','As duas chamadas draw_text desenham o mesmo titulo JUNTOS (sombra e frente); nenhum outro texto e exibido.')
+report=report.replace('ambos confirmam com W/Cima,','selecione duas silhuetas com A/D ou setas e confirme com E/Enter,')
+report+=f'''
+## Revisao visual, menu e solo
+
+Arte simplificada aprovada por Natan: P1 grisalho/oculos/ciano, P2 bone/ambar e drone. Atlas transparente, recortes por alpha, escala comum, origem nos pes e inversao horizontal. Capturas do motor mostram ambos os personagens no inicio, selecao de retrato e tres cenas da abertura. Recursos anteriores preservados. Verificacao visual da transparência e da inversao horizontal nas capturas; nao houve avaliacao humana da fluidez.
+
+Menu: cartao de uma/duas silhuetas; solo escolhe retrato; direcao navega, E/Enter confirma, S/Baixo volta. Replay coop entrou na selecao solo, voltou e iniciou coop pelo mesmo handler. Replays solo selecionaram cada retrato. Abertura12s com ruinas, artefato e chamado; tres cenas vistas por todos os replays. E/Enter pula apos1s; esse atalho ainda requer verificacao humana de tecla.
+
+| Execucao solo | P1 | P2 |
+|---|---:|---:|
+| Quadros ate final/reinicio | {solos[0]['frames']:.0f} | {solos[1]['frames']:.0f} |
+| Coletas do ativo | {solos[0]['p1_collected']:.0f} | {solos[1]['p2_collected']:.0f} |
+| Blocos do ativo | {solos[0]['p1_built']:.0f} | {solos[1]['p2_built']:.0f} |
+| Checkpoint do ativo | 5 | 5 |
+| Personagem inativo sem coleta/construcao/recuperacao | Sim | Sim |
+| Final/reinicio | Sim | Sim |
+
+Solo usa A/D/W/E com qualquer personagem. Camera, material, colisao com inimigo, bloqueio da construcao e vitoria filtram participantes ativos. Cada replay solo encontrou a patrulha, recuperou e removeu3 blocos da secao antes de concluir. Todos os cinco relatorios correspondem ao mesmo SHA256 da build. LDMT Final3 revisa somente descricoes do menu/abertura e condicao de chegada; Plan, pesos, formulas e IDs preservados.
+'''
 (R/'docs/TEST_REPORT.md').write_text(report,encoding='utf-8')
 (D/'TEST_REPORT.md').write_text(report,encoding='utf-8')
 (D/'SUBMISSION.txt').write_text('''JUNTOS
 Tema: A better world
 Dois sobreviventes recebem um chamado para subir. Os recursos pertencem a cada jogador, mas a torre e construida em conjunto. Ao alcancar o topo, a criacao ganha vida; o final revela seis criadores jogando, levando a ideia de construir juntos para fora da tela.
-Windows x64. Dois jogadores no mesmo teclado. P1 A/D/W/E; P2 Esquerda/Direita/Cima/Enter. Coleta automatica. Ambos confirmam o inicio e ambos precisam chegar ao topo.
+Windows x64. Solo com escolha do personagem ou dois jogadores no mesmo teclado. Menu A/D ou setas, E/Enter confirma, S/Baixo volta. Solo qualquer personagem A/D/W/E. Coop P1 A/D/W/E; P2 Esquerda/Direita/Cima/Enter. Coleta automatica; todos os participantes ativos precisam chegar ao topo. Abertura visual sem palavras.
 Equipe: Natan, Guilherme, Luiz, Emmanuel, Vanessa e Vitally.
 Sidequests demonstradas: multiplayer local; apenas titulo como texto; seis avatares simbolicos; quatro comandos por jogador com usos reaproveitados. Sem audio.
 Arte inclui imagens geradas com IA fornecidas durante a jam; elementos procedurais e codigo criados durante esta sessao. Declarar conforme exigencias da organizacao.
@@ -90,15 +116,19 @@ for p in [D/'documents/LDMT_JUNTOS_Plan.xlsx',D/'documents/LDMT_JUNTOS_Final.xls
 validation=json.loads((D/'documents/LDMT_VALIDATION.json').read_text())
 validation.update({'formula_count':len(sf),'fixed_ids_preserved':True,'all_xml_parse':True})
 (D/'documents/LDMT_VALIDATION.json').write_text(json.dumps(validation,indent=2))
+import shutil
+shutil.copyfile(R/'docs/ART_AND_SOURCES.md',D/'ART_AND_SOURCES.md')
+shutil.copyfile(D/'README.md',D/'windows/README.md')
 payload=[]
 for p in (D/'windows').iterdir():
  if p.is_file():payload.append((p,'windows/'+p.name))
 for n in ['LDMT_JUNTOS_Plan.xlsx','LDMT_JUNTOS_Final.xlsx','LDMT_VALIDATION.json']:payload.append((D/'documents'/n,'documents/'+n))
 for n in ['README.md','TEST_REPORT.md','ART_AND_SOURCES.md','SUBMISSION.txt']:payload.append((D/n,n))
-for name,label in [('qa_20.png','intro.png'),('qa_300.png','gameplay.png'),('qa_'+str(int(recovery['frames'])-120)+'.png','final.png')]:
+for name,label in [('qa_menu.png','menu.png'),('qa_character.png','selection.png'),('qa_intro_0.png','intro_ruins.png'),('qa_intro_1.png','intro_artifact.png'),('qa_intro_2.png','intro_mission.png'),('qa_coop_start.png','coop.png'),('qa_gameplay.png','gameplay.png'),('qa_solo2_start.png','solo.png'),('qa_final.png','final.png')]:
  p=D/'tests'/name
  if p.exists():payload.append((p,'screenshots/'+label))
-manifest={'game_commit':normal['source_commit'],'branch':'jam/mvp-complete','runtime':'2026.0.0.23','normal_passed':normal['passed'],'recovery_passed':recovery['passed'],'section_reset_passed':section['passed'],'files':{n:sha(p) for p,n in payload}}
+for name in ['qa_result.json','qa_recovery_result.json','qa_section_reset_result.json','qa_solo1_result.json','qa_solo2_result.json']:payload.append((D/'tests'/name,'tests/'+name))
+manifest={'game_commit':normal['source_commit'],'branch':'jam/mvp-complete','runtime':'2026.0.0.23','normal_passed':normal['passed'],'recovery_passed':recovery['passed'],'section_reset_passed':section['passed'],'solo1_passed':solos[0]['passed'],'solo2_passed':solos[1]['passed'],'files':{n:sha(p) for p,n in payload}}
 (D/'MANIFEST.json').write_text(json.dumps(manifest,indent=2))
 payload.append((D/'MANIFEST.json','MANIFEST.json'))
 out=D/'JUNTOS_Entrega.zip'

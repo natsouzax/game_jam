@@ -21,17 +21,20 @@ function scr_begin_intro() {
         if(global.player_count==1 && _p.active_player){_p.x=672;_p.respawn_x=672;_p.facing=1;}
     }
     global.game_state="intro";global.game_timer=0;
+    global.intro_scene=0;
+    scr_music(mus_intro);scr_sfx(sfx_intro_whoosh);
 }
 
 function scr_menu_input(_direction,_confirm,_back) {
-    if(_back && global.menu_stage==1){global.menu_stage=0;return;}
+    if(_back && global.menu_stage==1){global.menu_stage=0;scr_sfx(sfx_ui_back);return;}
     if(_direction!=0) {
+        scr_sfx(sfx_ui_move);
         if(global.menu_stage==0)global.menu_mode=1-global.menu_mode;
         else global.solo_character=1-global.solo_character;
     }
     if(_confirm) {
-        if(global.menu_stage==0 && global.menu_mode==0)global.menu_stage=1;
-        else scr_begin_intro();
+        if(global.menu_stage==0 && global.menu_mode==0){global.menu_stage=1;scr_sfx(sfx_ui_confirm);}
+        else {scr_sfx(sfx_ui_confirm);scr_begin_intro();}
     }
 }
 

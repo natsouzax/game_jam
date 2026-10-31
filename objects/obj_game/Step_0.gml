@@ -24,8 +24,10 @@ if(global.game_state=="title") {
     }
 } else if(global.game_state=="intro") {
     global.intro_seen[min(2,global.game_timer div 240)]=true;
+    scr_intro_audio();
     if(global.game_timer>=720 || (!global.qa && global.game_timer>60 && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)))) {
         global.game_state="play";global.game_timer=0;
+        scr_music(mus_game);
     }
 } else if(global.game_state=="play") {
     var _low_y=-10000;var _at_top=true;
@@ -50,7 +52,7 @@ if(global.game_state=="title") {
         spawn_timer=38;
     }
     camera_y=lerp(camera_y,clamp(_low_y-600,0,room_height-768),0.09);camera_set_view_pos(cam,0,camera_y);
-    if(_at_top) {global.game_state="ending";ending_timer=0;global.game_timer=0;}
+    if(_at_top) {global.game_state="ending";ending_timer=0;global.game_timer=0;scr_music(mus_ending);scr_sfx(sfx_victory,0,0.9);}
 } else if(global.game_state=="ending") {
     ending_timer++;
     if(ending_timer>420 && (keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up)||global.qa)) {

@@ -47,7 +47,7 @@ function scr_player_tick(_move, _jump, _build) {
     }
     x = clamp(x,32,room_width-32);
     grounded = scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
-    if (_jump && grounded) vy = jump_speed;
+    if (_jump && grounded) {vy = jump_speed; scr_sfx(sfx_jump, 0.04);}
     vy = min(vy + gravity_speed, 14);
     var _ny = y + vy;
     if (vy > 0) {
@@ -59,7 +59,7 @@ function scr_player_tick(_move, _jump, _build) {
     grounded = scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
     var _m = instance_nearest(x,y-35,obj_material);
     if (_m != noone && abs(_m.x-x)<40 && _m.y+18>y-body_height && _m.y-18<y) {
-        material_count++; collected_total++; instance_destroy(_m);
+        material_count++; collected_total++; instance_destroy(_m); scr_sfx(sfx_collect, 0.03);
     }
     if (_build && material_count > 0) {
         var _bx = (facing>0 ? ceil((x+body_half_width)/32)*32 : floor((x-body_half_width)/32)*32-32);
@@ -69,7 +69,7 @@ function scr_player_tick(_move, _jump, _build) {
         if (_bx>=32 && _bx+32<=room_width-32 && _by>=64 && !_occupied_by_partner && !scr_world_aabb_solid(_bx,_by,_bx+32,_by+32)) {
             var _new_block=instance_create_layer(_bx,_by,"Instances_1",obj_build_block);
             _new_block.builder_number=player_number;
-            material_count--; built_total++;
+            material_count--; built_total++; scr_sfx(sfx_block, 0.05);
         }
     }
     if (grounded) {
@@ -78,10 +78,11 @@ function scr_player_tick(_move, _jump, _build) {
             if(abs(y-_s.y)<2 && x>_s.x-12 && x<_s.x+_s.solid_width+12 && _s.builder_number>=0 && _s.builder_number!=player_number && last_support!=_s) {shared_uses++;last_support=_s;}
             if (_s.is_checkpoint && abs(y-_s.y)<2 && x>_s.x+8 && x<_s.x+_s.solid_width-8 && _s.level_id>checkpoint_level) {
                 checkpoint_level=_s.level_id; respawn_x=x; respawn_y=_s.y;
+                scr_sfx(sfx_checkpoint, 0, 0.9);
             }
         }
     }
-    if (y > respawn_y+160 || y > room_height+64) {fall_hits++;scr_player_recover();}
+    if (y > respawn_y+160 || y > room_height+64) {fall_hits++;scr_sfx(sfx_fall);scr_player_recover();}
 }
 function scr_player_render(_index) {
     if(!active_player || (global.game_state!="play" && global.game_state!="ending"))return;

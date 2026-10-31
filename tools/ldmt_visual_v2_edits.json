@@ -1,0 +1,17 @@
+{
+  "Overview": {
+    "F6": "MVP Final 3"
+  },
+  "Segments": {
+    "F9": "Selecionar modo/personagem",
+    "G9": "Menu visual; ruinas, artefato e chamado divino sem palavras.",
+    "K9": "Revisao: arte simplificada aprovada; menu solo/coop e escolha do personagem no solo; abertura de tres momentos.",
+    "F13": "Chegada dos participantes",
+    "G13": "Todos os ativos pousam no topo: um no solo, dois no cooperativo.",
+    "K13": "Testes Runner: coop e solo com cada personagem; coleta/construcao, topo e reinicio. Inativo nao joga."
+  },
+  "Level Map": {
+    "F9": "Selecao de modo/personagem e abertura visual",
+    "F21": "Pouso de todos os participantes ativos"
+  }
+}

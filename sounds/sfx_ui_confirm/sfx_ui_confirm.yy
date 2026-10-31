@@ -1,0 +1,26 @@
+{
+  "$GMSound":"v2",
+  "%Name":"sfx_ui_confirm",
+  "audioGroupId":{
+    "name":"audiogroup_default",
+    "path":"audiogroups/audiogroup_default",
+  },
+  "bitDepth":1,
+  "channelFormat":0,
+  "compression":0,
+  "compressionQuality":4,
+  "conversionMode":0,
+  "duration":0.22,
+  "exportDir":"",
+  "name":"sfx_ui_confirm",
+  "parent":{
+    "name":"audio",
+    "path":"folders/audio.yy",
+  },
+  "preload":true,
+  "resourceType":"GMSound",
+  "resourceVersion":"2.0",
+  "sampleRate":22050,
+  "soundFile":"sfx_ui_confirm.wav",
+  "volume":0.65,
+}

@@ -1,4 +1,12 @@
-﻿# Arte, narrativa e fontes
+# Arte, narrativa e fontes
+
+## Revisao visual aprovada em31/10/2026
+
+Natan aprovou P1 grisalho/oculos/ciano, P2 bone/ambar e drone vermelho simplificados. Substituem o desenho dos personagens/patrulha em execucao; arte antiga abaixo preservada como historico. Atlas RGBA1536x1024 gerado/editado com imagegen integrado; origem, prompt e medidas em art/README.md e scr_presentation. Nao tem celulas uniformes: recortes medidos por alpha, escala comum por personagem, origem nos pes, sem filtro. Altura visual80px; colisao32x70 mantida. Poses parado/dois passos/salto; sinal da escala horizontal espelha a direcao. Contrato de futura arte manual: PNG individual32x48 com pes(16,48).
+
+Menu por silhuetas escolhe solo/cooperativo e retrato no solo. Abertura visual12s: ruinas/artefato, revelacao divina, caminho compartilhado. E/Enter pula. Somente JUNTOS aparece como texto. O solo e opcional; a experiencia coop e chegada conjunta continuam. Narrativa original permanece fonte, sem dialogo inventado.
+
+## Inventario anterior preservado
 
 Fontes consultadas (somente leitura): Halloween_Game_Jam_Abertura_2026.pdf, LDMT_Game_Jam_Tutorial.pdf e LDMT_Game_Jam.xlsx em OneDrive/Documentos/ChatGPT/GameJam; Mundo Apocaliptico.pptx em Downloads; Ideia_1_Escopo_Inicial_v0.1-v0.3.md em GameJam/outputs. A v0.3 e o pedido atual substituem a proposta antiga de duas torres e final de quatro pessoas.
 

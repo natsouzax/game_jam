@@ -15,6 +15,8 @@ for(var _a=1;_a<=parameter_count();_a++) {
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
 if(global.qa)display_reset(0,false);
 random_set_seed(global.qa ? 7231 : current_time);
+scr_audio_init();
+scr_music(mus_menu);
 spawn_timer=30;spawn_side=0;ending_timer=0;camera_y=room_height-768;depth=400;
 display_set_gui_size(1366,768);gpu_set_texfilter(false);
 view_enabled=true;view_visible[0]=true;cam=view_camera[0];camera_set_view_size(cam,1366,768);camera_set_view_pos(cam,0,camera_y);
