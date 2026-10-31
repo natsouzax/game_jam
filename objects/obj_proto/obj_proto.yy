@@ -9,7 +9,10 @@
   "managed":true,
   "name":"obj_proto",
   "overriddenProperties":[],
-  "parent":{"name":"gameJam","path":"gameJam.yyp",},
+  "parent":{
+    "name":"gameJam",
+    "path":"gameJam.yyp",
+  },
   "parentObjectId":null,
   "persistent":false,
   "physicsAngularDamping":0.1,

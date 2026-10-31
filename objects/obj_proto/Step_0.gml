@@ -1,12 +1,11 @@
-p1_x += (keyboard_check(ord("D")) - keyboard_check(ord("A"))) * move_speed;
-p2_x += (keyboard_check(vk_right) - keyboard_check(vk_left)) * move_speed;
-p1_x = clamp(p1_x, 20, room_width - 20);
-p2_x = clamp(p2_x, 20, room_width - 20);
-if (p1_y >= ground_y && keyboard_check_pressed(ord("W"))) p1_vy = jump_speed;
-if (p2_y >= ground_y && keyboard_check_pressed(vk_up)) p2_vy = jump_speed;
-p1_vy += gravity_speed;
-p2_vy += gravity_speed;
-p1_y += p1_vy;
-p2_y += p2_vy;
-if (p1_y > ground_y) { p1_y = ground_y; p1_vy = 0; }
-if (p2_y > ground_y) { p2_y = ground_y; p2_vy = 0; }
+debug_timer -= 1;
+if (debug_timer <= 0) {
+    debug_timer = 60;
+    var f = file_text_open_write("C:/Users/natan/GameMakerProjects/gameJam/build/debug.txt");
+    file_text_write_string(f, "room=" + string(room_width) + "x" + string(room_height) + " win=" + string(window_get_width()) + "x" + string(window_get_height()) + " view=" + string(view_wview[0]) + "x" + string(view_hview[0]) + " port=" + string(view_wport[0]) + "x" + string(view_hport[0]) + " en=" + string(view_enabled) + "\n");
+    file_text_write_string(f, "p1=" + string(instance_number(obj_player_p1)) + " p2=" + string(instance_number(obj_player_p2)) + " mat=" + string(instance_number(obj_material)) + "\n");
+    with (obj_player_p1) file_text_write_string(f, "P1 " + string(x) + "," + string(y) + "\n");
+    with (obj_player_p2) file_text_write_string(f, "P2 " + string(x) + "," + string(y) + "\n");
+    with (obj_material) file_text_write_string(f, "M " + string(x) + "," + string(y) + "\n");
+    file_text_close(f);
+}

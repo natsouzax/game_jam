@@ -1,9 +1,4 @@
-draw_clear(make_color_rgb(24, 37, 53));
-draw_set_color(make_color_rgb(88, 166, 112));
-draw_rectangle(0, ground_y, room_width, room_height, false);
-// Formas temporárias para testar controles, sem texto no jogo.
-draw_set_color(make_color_rgb(255, 202, 83));
-draw_rectangle(p1_x - 16, p1_y - 42, p1_x + 16, p1_y, false);
-draw_set_color(make_color_rgb(117, 205, 255));
-draw_rectangle(p2_x - 16, p2_y - 42, p2_x + 16, p2_y, false);
-draw_set_color(c_white);
+draw_sprite_stretched(image_4f96e963, 0, 0, 0, room_width, room_height);
+var frame = floor(current_time / 220) mod 4;
+draw_sprite_part_ext(spr_tower_energy_sheet, 0, frame * 543, 0, 543, 724, 1000, 430, 0.48, 0.30, c_white, 1);
+draw_sprite_part_ext(spr_campfire_survivors_sheet, 0, frame * 543, 170, 543, 340, 24, 545, 0.55, 0.38, c_white, 1);

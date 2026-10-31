@@ -1,0 +1,10 @@
+depth = 0;
+ground_y = room_height - 96;
+move_speed = 5;
+jump_speed = -11;
+gravity_speed = 0.55;
+x = room_width * 0.35;
+y = ground_y;
+depth = -10;
+vy = 0;
+facing = 1;

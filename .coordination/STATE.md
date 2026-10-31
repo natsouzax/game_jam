@@ -67,3 +67,10 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Verificado com Igor do runtime GameMaker 2026.0.0.23: `windows Compile` terminou com exit code 0 e `Igor complete`. Isso valida carregamento/compilação, não demonstra visualmente a execução nem os teclados simultâneos.
 - O jogo ainda não implementa queda, coleta, posicionamento, subida construída ou recuperação. Perguntas pendentes enviadas ao usuário: transporte visível/inventário, regra de encaixe, recuperação.
 - Arquivos escritos: gameJam.yyp, rooms/Room1/Room1.yy, objects/obj_proto/obj_proto.yy e os três eventos GML, além deste STATE.md. Nenhum agente, Run, Task ou Dispatch iniciado; nenhum push/merge/publicação.
+
+## Cenário aplicado — 2026-10-31
+
+- Usuário forneceu imagem de cidade em ruínas 2400×1792. Foi gerada adaptação horizontal 1672×941 que preserva o cenário central e amplia as laterais.
+- Novo sprite `spr_ruins_bg` com PNG no projeto, registrado em gameJam.yyp. `obj_proto/Draw_0.gml` o desenha como fundo esticado para Room1; jogadores temporários receberam contorno para contraste. `obj_proto/Create_0.gml` desliga filtragem de textura.
+- Igor `windows Compile` com runtime 2026.0.0.23 concluiu com `Igor complete`, exit code 0, após as mudanças. A execução visual no GameMaker ainda precisa de validação humana.
+- Alteração local pré-existente em options/main/options_main.yy permaneceu intacta. Nenhum agente, push, merge ou publicação nesta etapa.
