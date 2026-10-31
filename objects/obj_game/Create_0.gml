@@ -1,8 +1,8 @@
 global.game_state="title";
 global.game_timer=0;global.ready_one=false;global.ready_two=false;
-global.qa_recovery_test=false;global.simultaneous_frames=0;
+global.qa_section_test=false;global.qa_recovery_test=false;global.simultaneous_frames=0;
 global.qa=false;global.qa_frame=0;global.qa_stage=0;global.qa_ending_seen=false;
-for(var _a=1;_a<=parameter_count();_a++) {if(parameter_string(_a)=="--qa")global.qa=true;if(parameter_string(_a)=="--qa-recovery") {global.qa=true;global.qa_recovery_test=true;}}
+for(var _a=1;_a<=parameter_count();_a++) {if(parameter_string(_a)=="--qa-section-reset"){global.qa=true;global.qa_section_test=true;}if(parameter_string(_a)=="--qa")global.qa=true;if(parameter_string(_a)=="--qa-recovery") {global.qa=true;global.qa_recovery_test=true;}}
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
 if(global.qa)display_reset(0,false);
 random_set_seed(global.qa ? 7231 : current_time);

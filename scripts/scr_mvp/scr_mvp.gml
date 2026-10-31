@@ -5,13 +5,35 @@ function scr_player_init(_index) {
     x = 570 + _index * 150; y = 1408; vy = 0; facing = (_index == 0 ? 1 : -1);
     material_count = 0; collected_total = 0; built_total = 0; recoveries = 0;
     respawn_x = x; respawn_y = y; grounded = true; invulnerable = 0;
-    enemy_hits=0;fall_hits=0;last_move=0;shared_uses=0;last_support=noone;recovery_preserved=true;
+    enemy_hits=0;fall_hits=0;last_move=0;shared_uses=0;last_support=noone;recovery_valid=true;reset_blocks_total=0;section_resets=0;
     checkpoint_level = 0; depth = -10; qa_jump_cooldown = 0; qa_target=noone;
 }
+// Section 0 is ground-to-first-checkpoint; each next section is 192 px high.
+function scr_tower_section_at_y(_top) {
+    return max(0, floor((1408 - _top - 1) / 192));
+}
+function scr_reset_section_blocks(_section) {
+    var _remove=[];
+    var _keep=[];
+    for(var _i=0;_i<instance_number(obj_build_block);_i++) {
+        var _block=instance_find(obj_build_block,_i);
+        if(!_block.is_checkpoint && _block.section_id==_section) array_push(_remove,_block);
+        else array_push(_keep,_block);
+    }
+    for(var _j=0;_j<array_length(_remove);_j++) instance_destroy(_remove[_j]);
+    var _valid=true;
+    for(var _k=0;_k<array_length(_keep);_k++) _valid=_valid && instance_exists(_keep[_k]);
+    for(var _n=0;_n<array_length(_remove);_n++) _valid=_valid && !instance_exists(_remove[_n]);
+    return {removed:array_length(_remove),scope_ok:_valid};
+}
 function scr_player_recover() {
-    var _stock_before=material_count;var _blocks_before=instance_number(obj_build_block);
-    x = respawn_x; y = respawn_y; vy = 0; invulnerable = 100; recoveries++; qa_target=noone;
-    recovery_preserved=(material_count==_stock_before && instance_number(obj_build_block)==_blocks_before);
+    var _stock_before=material_count;
+    // The tower is shared: reset both builders' blocks in the active checkpoint section.
+    var _reset=scr_reset_section_blocks(checkpoint_level);
+    reset_blocks_total+=_reset.removed; section_resets++;
+    x=respawn_x; y=respawn_y; vy=0; grounded=true;
+    invulnerable=100; recoveries++; qa_target=noone; last_support=noone;
+    recovery_valid=recovery_valid && material_count==_stock_before && _reset.scope_ok;
 }
 function scr_player_tick(_move, _jump, _build) {
     if (global.game_state != "play") return;
@@ -108,6 +130,18 @@ function scr_qa_input() {
     if(qa_target!=noone) {
         var _margin=min(12,qa_target.solid_width/2);
         var _target=clamp(x,qa_target.x+_margin,qa_target.x+qa_target.solid_width-_margin);
+        // A retained upper-section block can be a ceiling: choose a clear landing column.
+        if(qa_target.is_checkpoint) {
+            var _candidates=[_target];
+            for(var _column=qa_target.x+24;_column<qa_target.x+qa_target.solid_width-16;_column+=32) array_push(_candidates,_column);
+            var _distance=100000;
+            for(var _c=0;_c<array_length(_candidates);_c++) {
+                var _cx=_candidates[_c];
+                if(abs(_cx-x)<_distance && !scr_world_aabb_solid(_cx-16,qa_target.y-body_height,_cx+16,y,true)) {
+                    _target=_cx;_distance=abs(_cx-x);
+                }
+            }
+        }
         _move=(abs(_target-x)>3 ? sign(_target-x):0);
         _jump=grounded && qa_jump_cooldown==0;
     } else if(grounded && y>448) {
@@ -119,4 +153,30 @@ function scr_qa_input() {
     }
     if(_jump)qa_jump_cooldown=28;
     return [_move,_jump,_build];
+}
+
+// Focused runtime fixture, separate from the action-driven full-game replay.
+function scr_qa_section_reset_test(_p1,_p2) {
+    var _earlier=instance_create_layer(64,1376,"Instances_1",obj_build_block);
+    var _current_one=instance_create_layer(128,1184,"Instances_1",obj_build_block);
+    var _current_two=instance_create_layer(192,1152,"Instances_1",obj_build_block);
+    var _later=instance_create_layer(256,992,"Instances_1",obj_build_block);
+    _current_one.builder_number=0;_current_two.builder_number=1;
+    _p1.checkpoint_level=1;_p1.respawn_x=640;_p1.respawn_y=1216;_p1.material_count=3;
+    with(_p1) scr_player_recover();
+    var _section_one_ok=!instance_exists(_current_one) && !instance_exists(_current_two)
+        && instance_exists(_earlier) && instance_exists(_later)
+        && _p1.x==640 && _p1.y==1216 && _p1.material_count==3 && _p1.reset_blocks_total==2;
+    _p2.material_count=2;
+    with(_p2) scr_player_recover();
+    var _fixed=0;
+    for(var _i=0;_i<instance_number(obj_build_block);_i++) {
+        if(instance_find(obj_build_block,_i).is_checkpoint) _fixed++;
+    }
+    var _ok=_section_one_ok && !instance_exists(_earlier) && instance_exists(_later)
+        && _p2.y==1408 && _p2.material_count==2 && _p2.reset_blocks_total==1
+        && _fixed==5 && instance_number(obj_build_block)==6 && _p1.recovery_valid && _p2.recovery_valid;
+    return {passed:_ok,section_one_removed:_p1.reset_blocks_total,section_zero_removed:_p2.reset_blocks_total,
+        fixed_platforms:_fixed,later_section_preserved:instance_exists(_later),both_builders_removed:_section_one_ok,
+        inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==1216 && _p2.y==1408};
 }
