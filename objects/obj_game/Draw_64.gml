@@ -15,4 +15,7 @@ else if(_state=="play") {
 } else if(_state=="gameover") scr_draw_gameover();
 else if(_state=="ending") scr_draw_ending(ending_timer);
 draw_set_alpha(1);draw_set_color(c_white);
-if(global.qa)scr_qa_capture();
+if(global.qa_regression) {
+    if(qa_regression_stage==1)screen_save("qa_regression_play.png");
+    if(qa_regression_stage==2)screen_save("qa_regression_menu.png");
+} else if(global.qa)scr_qa_capture();

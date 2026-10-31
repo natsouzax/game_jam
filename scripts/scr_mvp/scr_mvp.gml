@@ -1,6 +1,6 @@
 function scr_player_init(_index) {
     player_number = _index; active_player=true; body_half_width = 16; body_height = 70;
-    move_speed = 4; jump_speed = -9.4; gravity_speed = 0.48;
+    move_speed = 4; jump_speed = -11; gravity_speed = 0.48;
     x = (_index==0 ? 270 : 1096); y = scr_floor_y(); vy = 0; facing = (_index == 0 ? 1 : -1);
     material_count = 0; collected_total = 0; built_total = 0; recoveries = 0;
     respawn_x = x; respawn_y = y; grounded = true; invulnerable = 0;
@@ -89,79 +89,47 @@ function scr_player_die() {
         scr_player_recover();
         invulnerable = 120;
     } else {
-        dead = true;
-        active_player = false;
-        respawn_timer = 30 * 60;
-        var _partner = instance_find(player_number == 0 ? obj_player_p2 : obj_player_p1, 0);
-        var _both_down = (_partner != noone && _partner.dead) || global.death_window_timer > 0;
-        if (!_both_down) global.death_window_timer = 30 * 60;
-        else scr_begin_gameover();
+        // A defeated teammate ends the attempt for the pair and for solo.
+        scr_begin_gameover();
     }
 }
 function scr_player_tick(_move, _jump, _build, _jump_held=false) {
     if (!active_player || global.game_state != "play") return;
     last_move=_move;
-    // capture hold state before any reset
-    var _was_held = _jump_was_held;
-    var _cd = _charge_dir;
-    jump_held = _jump_held;
     if (invulnerable > 0) invulnerable--;
-    if (_move != 0) facing = sign(_move);
-    if (_jump_held) {
-        if (_charge_dir == 0 && charge < 5 && _move != 0) {
-            _charge_dir = sign(_move);
+    if (_move != 0) facing=sign(_move);
+    grounded=scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
+    // Normal jump is immediate. Only the separate dash key can accumulate charge.
+    var _charging=_jump_held && grounded && !_jump;
+    var _release=_jump_was_held && !_jump_held && grounded;
+    jump_held=_charging;
+    if (_charging) {
+        charge=min(charge+1,150);
+        if (_move!=0) _charge_dir=sign(_move);
+    }
+    if (_jump && grounded) {
+        vy=jump_speed;charge=0;_hthrust=0;_charge_dir=0;
+        scr_sfx(sfx_jump,0.04);
+    } else if (_release && charge>0) {
+        var _ratio=charge/150;
+        vy=jump_speed-6*_ratio;
+        if (charge>=150) {
+            _hdir=(_charge_dir!=0?_charge_dir:facing);
+            _hthrust=30;vy=-12;facing=_hdir;
         }
-        _jump_was_held = true;
+        charge=0;_charge_dir=0;scr_sfx(sfx_jump,0.04);
     }
-    _hjump_cooldown = max(0, _hjump_cooldown - 1);
-    var _hint = (_move != 0) ? sign(_move) : ((_hthrust > 0 && _hdir != 0) ? _hdir : 0);
-    var _hspd = 0;
-    // While charging the jump the player stands still.
-    if (_jump_held) {
-        _hspd = 0;
-    } else if (_hthrust > 0) {
-        _hspd = _hthrust;
-    } else if (_move != 0) {
-        if (grounded) _hspd = abs(_move) * move_speed;
-        else _hspd = abs(_move) * move_speed;
+    if (!grounded) {charge=0;_charge_dir=0;}
+    _jump_was_held=_charging;
+    var _dir=(_hthrust>0?_hdir:sign(_move));
+    var _speed=(_charging?0:(_hthrust>0?_hthrust:abs(_move)*move_speed));
+    repeat(round(_speed)) {
+        var _nx=x+_dir;
+        if(scr_world_aabb_solid(_nx-body_half_width,y-body_height,_nx+body_half_width,y,true))break;
+        x=_nx;
     }
-    repeat (round(_hspd)) {
-        var _nx = x + _hint;
-        if (scr_world_aabb_solid(_nx-body_half_width,y-body_height,_nx+body_half_width,y,true)) break;
-        x = _nx;
-    }
-    _hthrust = max(0, _hthrust - 0.5);
-    x = clamp(x,32,room_width-32);
-    grounded = scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
-    if (_jump_held) {
-        charge = min(charge + 1, 150);
-    }
-    if (grounded) {
-        if (!_jump_held && (charge > 0 || _jump)) {
-
-            var _extra = min(charge / 150, 0.5);
-            var _jump_vy = jump_speed - 12 * _extra;
-            var _hd = (_cd != 0) ? _cd : sign(_move);
-            if (charge >= 150 && (_cd != 0 || _move != 0)) {
-                // horizontal jump to reach the second platform
-                _jump_vy = -12.0;
-                _hthrust = 30;
-                _hdir = _hd;
-                facing = _hd;
-            }
-            vy = _jump_vy;
-            scr_sfx(sfx_jump, 0.04);
-            charge = 0;
-            _jump_was_held = false;
-            _charge_dir = 0;
-        } else {
-            // grounded, no jump: reset hold flags
-            _jump_was_held = false;
-            _charge_dir = 0;
-        }
-    } else {
-        if (!_jump_held) charge = 0;
-    }
+    _hthrust=max(0,_hthrust-0.5);
+    x=clamp(x,32,room_width-32);
     vy = min(vy + gravity_speed, 14);
     var _ny = y + vy;
     if (vy > 0) {

@@ -1,6 +1,12 @@
 global.game_timer++;
 var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
 if(_p1==noone || _p2==noone)exit;
+if(variable_global_exists("retry_pending") && global.retry_pending) {
+    global.retry_pending=false;
+    _p1.active_player=global.player_count==2 || global.solo_character==0;
+    _p2.active_player=global.player_count==2 || global.solo_character==1;
+}
+if(global.qa_regression){scr_qa_regression(_p1,_p2);exit;}
 if(global.restart_game){scr_return_to_title();exit;}
 if(global.qa_section_test) {
     var _section_report=scr_qa_section_reset_test(_p1,_p2);

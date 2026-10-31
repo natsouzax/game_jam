@@ -28,6 +28,7 @@
   },
   "name":"gameJam",
   "resources":[
+    {"id":{"name":"shd_blue_cutout","path":"shaders/shd_blue_cutout/shd_blue_cutout.yy",},},
     {"id":{"name":"spr_cut_yard","path":"sprites/spr_cut_yard/spr_cut_yard.yy",},},
     {"id":{"name":"spr_cut_ruins","path":"sprites/spr_cut_ruins/spr_cut_ruins.yy",},},
     {"id":{"name":"spr_cut_room","path":"sprites/spr_cut_room/spr_cut_room.yy",},},

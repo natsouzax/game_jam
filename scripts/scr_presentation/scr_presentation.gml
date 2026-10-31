@@ -565,19 +565,20 @@ function scr_menu_input(_direction,_confirm,_back,_vertical=0) {
 }
 
 function scr_player_controls() {
+    if(global.qa_regression)return;
     if(!active_player)return;
     if(dead)return;
     if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2],false);}
     else if(global.player_count==1 || player_number==0) {
         var _mv = keyboard_check(ord("D"))-keyboard_check(ord("A"));
         var _jp = keyboard_check_pressed(ord("W"));
-        var _jh = keyboard_check(ord("W"));
+        var _jh = keyboard_check(ord("Q"));
         var _bl = keyboard_check_pressed(ord("E"));
         scr_player_tick(_mv,_jp,_bl,_jh);
     } else {
         var _mv2 = keyboard_check(vk_right)-keyboard_check(vk_left);
         var _jp2 = keyboard_check_pressed(vk_up);
-        var _jh2 = keyboard_check(vk_up);
+        var _jh2 = keyboard_check(vk_rshift);
         var _bl2 = keyboard_check_pressed(vk_enter);
         scr_player_tick(_mv2,_jp2,_bl2,_jh2);
     }
@@ -800,8 +801,7 @@ function scr_gameover_input(_timer) {
     if (_timer < 18) return;
     if (keyboard_check_pressed(vk_escape)) {
         scr_sfx(sfx_ui_back);
-        scr_audio_silence();
-        game_end();
+        scr_return_to_title();
         return;
     }
     var _mx = device_mouse_x_to_gui(0);
@@ -831,11 +831,15 @@ function scr_gameover_input(_timer) {
     if (!_click && !_confirm) return;
     if (_click) global.gameover_choice = _hover;
     scr_sfx(sfx_ui_confirm);
-    if (global.gameover_choice == 0) scr_return_to_title();
-    else {
+    scr_gameover_select(global.gameover_choice);
+}
+
+function scr_gameover_select(_choice) {
+    if (_choice==0) {
+        global.game_state="play";global.game_timer=0;global.retry_pending=true;
         scr_audio_silence();
-        game_end();
-    }
+        if(room==Room1)room_restart();else room_goto(Room1);
+    } else scr_return_to_title();
 }
 
 function scr_draw_gameover() {
@@ -845,23 +849,29 @@ function scr_draw_gameover() {
     draw_set_alpha(1);
     scr_actor_pose(0, 1, 500, 390, 96, 1, 0.72);
     scr_actor_pose(1, 1, 866, 390, 96, -1, 0.72);
-    draw_set_halign(fa_center);
-    draw_set_valign(fa_middle);
-    draw_set_color(make_color_rgb(9, 17, 24));
-    draw_text_transformed(688, 168, "FIM DE JOGO", 4, 4, 0);
-    draw_set_color(make_color_rgb(232, 168, 122));
-    draw_text_transformed(683, 162, "FIM DE JOGO", 4, 4, 0);
-    var _labels = ["REPETIR", "ENCERRAR"];
-    for (var _i = 0; _i < 2; _i++) {
-        var _r = scr_gameover_button_rect(_i);
-        scr_ui_panel(_r[0], _r[1], _r[2], _r[3], global.gameover_choice == _i);
-        draw_set_color(global.gameover_choice == _i ? make_color_rgb(255, 222, 151) : make_color_rgb(189, 207, 198));
-        draw_text_transformed((_r[0] + _r[2]) / 2, (_r[1] + _r[3]) / 2, _labels[_i], 2, 2, 0);
+    // Text-free retry arrow and house: keyboard or mouse selects either panel.
+    for(var _i=0;_i<2;_i++) {
+        var _r=scr_gameover_button_rect(_i);
+        scr_ui_panel(_r[0],_r[1],_r[2],_r[3],global.gameover_choice==_i);
+        var _cx=(_r[0]+_r[2])/2;var _cy=(_r[1]+_r[3])/2;
+        draw_set_color(make_color_rgb(235,211,157));
+        if(_i==0) {
+            draw_circle(_cx,_cy,27,true);
+            draw_triangle(_cx+12,_cy-32,_cx+32,_cy-26,_cx+20,_cy-12,false);
+        } else {
+            draw_triangle(_cx-34,_cy-4,_cx,_cy-32,_cx+34,_cy-4,false);
+            draw_rectangle(_cx-24,_cy-4,_cx+24,_cy+28,false);
+            draw_set_color(make_color_rgb(30,43,51));draw_rectangle(_cx-7,_cy+6,_cx+7,_cy+28,false);
+        }
     }
-    draw_set_color(make_color_rgb(189, 207, 198));
-    draw_circle(683, 650, 18, true);
-    draw_triangle(678, 640, 678, 660, 692, 650, false);
-    draw_set_halign(fa_left);
-    draw_set_valign(fa_top);
     draw_set_color(c_white);
+}
+
+// Five measured poses share a baseline; remove the sheet matte while rendering.
+function scr_blue_enemy_draw(_frame,_x,_y) {
+    static _rects=[[32,24,156,192],[236,24,152,192],[420,24,156,192],[604,24,204,192],[812,24,212,192]];
+    var _r=_rects[_frame];var _scale=0.4;
+    shader_set(shd_blue_cutout);
+    draw_sprite_part_ext(spr_foguinho,0,_r[0],_r[1],_r[2],_r[3],round(_x-_r[2]*_scale/2),round(_y-96*_scale),_scale,_scale,c_white,1);
+    shader_reset();
 }

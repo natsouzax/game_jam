@@ -45,3 +45,26 @@ if (global.game_state == "ending") {
 }
 draw_set_alpha(1);
 draw_set_color(c_white);
+
+// The floor silhouette matches the two collision banks exactly.
+var _floor=scr_floor_y();
+draw_set_color(make_color_rgb(10,13,23));
+draw_rectangle(540,_floor,826,room_height,false);
+for(var _bank=0;_bank<2;_bank++) {
+    var _left=(_bank==0?0:826),_right=(_bank==0?540:room_width);
+    draw_set_color(make_color_rgb(48,40,45));draw_rectangle(_left,_floor,_right,room_height,false);
+    draw_set_color(make_color_rgb(122,111,105));draw_rectangle(_left,_floor,_right,_floor+12,false);
+    draw_set_color(make_color_rgb(188,165,130));draw_rectangle(_left,_floor,_right,_floor+3,false);
+    for(var _stone=_left;_stone<_right-8;_stone+=28) {
+        draw_set_color(make_color_rgb(78,68,67));
+        draw_rectangle(_stone+4,_floor+24,_stone+16,_floor+32,false);
+    }
+}
+// Broken edges and a receding wall expose the depth of the central chasm.
+for(var _edge=0;_edge<2;_edge++) {
+    var _ex=(_edge==0?540:826);var _side=(_edge==0?-1:1);
+    draw_set_color(make_color_rgb(97,74,68));
+    for(var _crack=0;_crack<6;_crack++)
+        draw_rectangle(min(_ex,_ex+_side*(12+_crack*4)),_floor+16+_crack*16,max(_ex,_ex+_side*(12+_crack*4)),_floor+24+_crack*16,false);
+}
+draw_set_color(c_white);draw_set_alpha(1);

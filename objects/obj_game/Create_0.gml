@@ -1,3 +1,5 @@
+global.qa_regression=false;
+qa_regression_stage=0;qa_regression_hold=0;
 global.qa_skip_ending=false;
 if (!variable_global_exists("game_state")) global.game_state="title";
 if (!variable_global_exists("game_timer")) global.game_timer=0;
@@ -16,6 +18,7 @@ for(var _a=1;_a<=parameter_count();_a++) {
     var _arg=parameter_string(_a);
     if(_arg=="--qa-section-reset"){global.qa=true;global.qa_section_test=true;}
     if(_arg=="--qa-skip-ending"){global.qa=true;global.qa_skip_ending=true;}
+    if(_arg=="--qa-regression"){global.qa=true;global.qa_regression=true;}
     if(_arg=="--qa")global.qa=true;
     if(_arg=="--qa-recovery"){global.qa=true;global.qa_recovery_test=true;}
     if(_arg=="--qa-solo1"){global.qa=true;global.qa_solo=0;}
