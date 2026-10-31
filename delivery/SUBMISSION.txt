@@ -1,0 +1,8 @@
+JUNTOS
+Tema: A better world
+Dois sobreviventes recebem um chamado para subir. Os recursos pertencem a cada jogador, mas a torre e construida em conjunto. Ao alcancar o topo, a criacao ganha vida; o final revela seis criadores jogando, levando a ideia de construir juntos para fora da tela.
+Windows x64. Solo com escolha do personagem ou dois jogadores no mesmo teclado. Menu A/D ou setas, E/Enter confirma, S/Baixo volta. Solo qualquer personagem A/D/W/E. Coop P1 A/D/W/E; P2 Esquerda/Direita/Cima/Enter. Coleta automatica; todos os participantes ativos precisam chegar ao topo. Abertura visual sem palavras.
+Equipe: Natan, Guilherme, Luiz, Emmanuel, Vanessa e Vitally.
+Sidequests demonstradas: multiplayer local; apenas titulo como texto; seis avatares simbolicos; quatro comandos por jogador com usos reaproveitados. Sem audio.
+Arte inclui imagens geradas com IA fornecidas durante a jam; elementos procedurais e codigo criados durante esta sessao. Declarar conforme exigencias da organizacao.
+Entregar Windows/ e LDMT Plan + Final. Canal de upload e eventual codigo oficial de equipe devem ser informados pela organizacao. Nenhum envio foi feito.

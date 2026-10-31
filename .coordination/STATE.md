@@ -74,3 +74,58 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Novo sprite `spr_ruins_bg` com PNG no projeto, registrado em gameJam.yyp. `obj_proto/Draw_0.gml` o desenha como fundo esticado para Room1; jogadores temporários receberam contorno para contraste. `obj_proto/Create_0.gml` desliga filtragem de textura.
 - Igor `windows Compile` com runtime 2026.0.0.23 concluiu com `Igor complete`, exit code 0, após as mudanças. A execução visual no GameMaker ainda precisa de validação humana.
 - Alteração local pré-existente em options/main/options_main.yy permaneceu intacta. Nenhum agente, push, merge ou publicação nesta etapa.
+
+## Queda e coleta de materiais ? 2026-10-31
+
+- Decis?es confirmadas pelo usu?rio: coleta autom?tica ao encostar; invent?rio individual por jogador; uma ?nica pe?a cai por vez, e fica no ch?o at? ser recolhida.
+- Implementado diretamente no workspace atual: P1 controla a gera??o; cada jogador possui `material_count`; qualquer um coleta a pe?a mais pr?xima dentro da ?rea de contato; os estoques s?o indicados por losangos roxos sem n?meros/texto.
+- Proposta provis?ria do agente: gerar a primeira pe?a imediatamente, depois aguardar 3 segundos ap?s a anterior ser coletada; sortear a posi??o horizontal. Esses valores podem ser ajustados ap?s teste e n?o foram definidos separadamente pelo usu?rio.
+- Arquivos alterados: `objects/obj_player_p1/{Create_0,Step_0,Draw_0}.gml` e `objects/obj_player_p2/{Create_0,Step_0,Draw_0}.gml`. Sem edi??o de `gameJam.yyp` ou `rooms/Room1/Room1.yy` nesta tarefa.
+- Verifica??o: `git diff --check` sem erros (aviso existente de normaliza??o CRLF em `objects/fire/Draw_0.gml`); Igor runtime GameMaker 2026.0.0.23 `windows Compile` terminou com exit code 0 / `Igor complete`.
+- Orca 1.4.245 revalidado: runtime ready/connected; terminais da pasta do projeto vis?veis; `run-current` nulo. OpenCode informou 0 credenciais no auth local. Nenhum executor lan?ado: quota gratuita/modelo eleg?vel n?o foi confirmado, e as altera??es locais em `master` tornam um worktree criado a partir do HEAD inadequado sem snapshot fiel. Codex implementou a pequena integra??o nos arquivos de eventos atuais; nenhuma sess?o existente foi encerrada.
+- Falta executar visualmente: verificar a queda, coleta individual dos dois jogadores e leitura dos ?cones na cena. Nenhum commit, push, merge ou publica??o.
+
+## Chao real, colisao e construcao em blocos ? 2026-10-31
+
+- Decisoes do usuario: cada bloco consome 1 material; o bloco aparece diretamente a frente do personagem, no lado para o qual esta virado. Sem mouse.
+- Proposta aplicada: grade de 32 px, bloco de 32x32, uma acao por pressionamento (P1 E / P2 Enter, conforme controles anteriormente reservados). Bloco fica uma celula acima dos pes; alvo ocupado ou fora da sala nao consome material. Aparencia provisoria de pedra/entulho. O conteudo e o movimento podem ser ajustados apos teste.
+- Estrutura OOP/GameMaker: `obj_world_solid` e pai; `obj_ground` e `obj_build_block` sao filhos. Room1 ganhou instancia fisica invisivel do chao em y=672. Jogadores colidem com estas instancias por AABB; materiais pousam na superficie mais alta encontrada. Cada bloco construido e uma instancia no layer `Instances_1`.
+- Controles: movimento/jump preservados; inventario segue individual; E/Enter constroem. Blocos sao compartilhados no mundo.
+- Draw do P1 tinha uma linha local incompleta que referia `spr_player1_idle`; preservei a intencao e conclui a animacao ociosa usando as quatro celulas 2x2. O erro de sintaxe foi a causa da primeira compilacao falhar; compilacao seguinte passou.
+- Arquivos criados: `folders/world.yy`; `objects/obj_world_solid/*`; `objects/obj_ground/*`; `objects/obj_build_block/*`; `scripts/scr_world_collision/*`. Arquivos registrados/alterados: `gameJam.yyp`, `rooms/Room1/Room1.yy`, Steps/Create/Draw dos jogadores, Create/Step do material, Draw P1.
+- Verificacao: Igor com runtime GameMaker 2026.0.0.23 `windows Compile` terminou com exit code 0 e `Igor complete`. Runtime Runner estava aberto minimizado; nao o trouxe para frente. Falta conferir visualmente queda, coleta, gasto de material, encaixe, colisao e subida.
+- Orca: nenhum executor foi iniciado nesta tarefa; nao foi selecionado provedor sem saldo/custo gratuito verificavel. Alteracoes locais em `master` preservadas; nenhum commit, push, merge ou publicacao.
+
+## MVP completo e pacote local ? 2026-10-31
+
+- Pedido atual autoriza escolhas comuns de escopo e trabalho continuo. Estado real inicial: master limpa em 938089d (ESTAGIO 3). Criada branch jam/mvp-complete; master e trabalho da equipe preservados.
+- Codigo do jogo concluido no commit 9cde5a3: titulo/confirmacao dos dois, introducao visual divina, sala vertical, estoques individuais, queda/coleta, construcao a frente por E/Enter, plataformas de recuperacao, camera, patrulha, chegada conjunta pousada, vegetacao no mundo e revelacao de seis avatares num monitor, reinicio.
+- Nomes confirmados no escopo v0.3 em GameJam/outputs: Natan, Guilherme, Luiz, Emmanuel, Vanessa e Vitally. Avatares simbolicos por cor; nao sao retratos. Texto dentro do jogo: somente JUNTOS. Sem audio/paleta limitada.
+- Arquitetura: obj_game controla fases/camera/fornecimento; scr_mvp compartilha logica dos jogadores; objetos de mundo continuam instancias e colisoes; obj_enemy e uma patrulha. Recortes medidos por alpha; pes ancorados. Registro inicial e revisoes em docs/ e LDMT Plan/Final.
+- Orca revalidado: runtime acessivel, caller=null nesta sessao externa. Nao foi assumida sessao de outro coordenador. OpenCode auth local 0 credenciais; catalogo beam-free informa custo 0 e tools, mas quota/conta e dispatch visivel nao foram comprovados. Sem workers/Run/Task/Dispatch criados, sem ativar consumo; coordenador implementou diretamente para evitar custo/assuncao de autoridade. Nao foram usados subagentes internos como substituto.
+- Teste Windows da build distribuida: normal passou com 1307 frames, coletas17/4, blocos11/4, uso dos blocos do parceiro4/6,173 frames de movimento simultaneo, ambos checkpoint5, final e reinicio. Recuperacao passou com1689 frames, coletas13/6, blocos9/6, usos5/5,364 frames simultaneos,6 quedas P1,1 contato com inimigo P2, ambos checkpoint5, final/reinicio. Sem teleporte ao topo ou material concedido ao bot.
+- SHA256 de data.win testado: AD570E045E7F3BAE4A101FA625A8418C5633AED845049F05B1F9F40140971FAA. Engine do export existente e Runner instalado tem mesmo hash. Execucao sem argumentos carregou data.win. A API desktop ficou sem native pipe; nao houve ensaio final com teclado fisico nem teste em outro PC.
+- LDMT: original preservado, 1512 formulas e IDs fixos iguais; entradas de planejamento, caches e grafico atualizados; validacao XML e aritmetica independente. Artifact-tool tinha caches antigos, corrigidos na copia preservando todas as partes originais. Pesos propostos de planejamento, nao medidas de diversao; revisoes registram falhas observadas no Runner.
+- Entrega: delivery/JUNTOS_Entrega.zip com windows/, documents/Plan+Final, controles, texto de submissao, manifesto e capturas. Windows satisfaz formato das regras; nao foi feita WebGL. Originalidade/proveniencia e uso de imagens geradas com IA documentados; sem recursos de jogos comerciais.
+- Falta externa: upload autorizado no canal da organizacao e eventual ID oficial da equipe. Recomendado teste humano de conforto/ghosting e compatibilidade de planilha no Excel; nao foram declarados como realizados. Nenhum push, merge em master ou publicacao.
+- Reproducao: tools/build_windows.ps1; tools/run_qa.ps1 [-Recovery]; tools/package_release.py. Handoff para Natan/Guilherme em docs/HANDOFF.md. Um integrador deve editar gameJam.yyp e Room1; reabrir projeto na IDE antes de salvar buffers antigos.
+
+
+## Revisao de morte por secao ? 2026-10-31
+
+- Pedido novo substitui a preservacao integral da torre: morte/recuperacao volta ao checkpoint e limpa somente os blocos construidos na secao atual, dos dois jogadores. Plataformas fixas, outras secoes e estoques preservados; sem reembolso.
+- Implementado section_id por faixa vertical de192px em cada bloco, com limpeza por checkpoint_level. Lista de IDs removiveis e preservados evita pular instancias ao destruir; partner vivo nao e reposicionado.
+- Codigo: d2ce2bf na branch jam/mvp-complete. Master preservada, sem push/merge/publicacao.
+- Teste focado no Runner passou: apagou dois blocos (um de cada construtor) na secao1, conservou secoes0/2 e cinco plataformas, retornou ao checkpoint e conservou estoque. Depois validou tambem a secao0.
+- Replays completos repetidos no executavel distribuido: partida normal e partida com quedas/inimigo passaram ate ambos no topo, final e reinicio. Recuperacoes removeram10 blocos no P1 e2 no P2; verificacao de escopo correta. Ajuste da rota do bot para contornar tetos de blocos preservados, sem mudar colisoes do jogo.
+- LDMT Final v2 e instrucoes revisadas; Plan inicial preservado. ZIP de entrega substituido com a nova build e manifesto/testes atualizados. SHA256 data.win: 3F533A950BB32EA32024AF7B27C8A8A1D4685D44BF6FD086AED2FC52BC10E9F5.
+
+## Arte simplificada, menu e solo - 2026-10-31
+
+- Natan aprovou explicitamente o estudo visual: P1 grisalho/oculos/ciano, P2 bone/ambar e drone vermelho. Implementacao8a7f3bd na branch jam/mvp-complete; base anterior4a3972a limpa. Nenhum trabalho local de terceiros foi substituido.
+- Menu ilustrado seleciona solo/coop; no solo seleciona retrato. A/D ou setas navegam, E/Enter confirma, S/Baixo volta. Solo qualquer personagem usa A/D/W/E; coop preserva A/D/W/E e setas/Enter. Abertura12s sem palavras: ruinas, artefato, chamado; E/Enter pula apos1s.
+- scr_presentation separa apresentacao/controles/atlas; scr_qa separa QA; scr_mvp conserva movimento/coleta/construcao/recuperacao. Inativo nao coleta, colide com patrulha, bloqueia construcao, nem conta para camera/vitoria. Recursos antigos mantidos. Arte imagegen integrado, fonte/prompt em art/README; atlas medido por alpha e espelhado pelo sinal da escala.
+- Orca1.4.245 revalidado, runtime ready/reachable, caller=null. Sem Run/Task/Dispatch/executores criados; sem assumir sessao alheia. Nenhuma quota externa selecionada, nenhuma cobranca por consumo ativada; trabalho direto do coordenador.
+- Build compilada com Igor2026.0.0.23; SHA256 data.win9D4A8CB76E1CB95EF03449A916CB5549B8D19B3DBDAE3ED81CDE65BBDC2C85DF. Coop2061frames, coletas17/4, blocos11/4, uso parceiro4/6, topo/final/reinicio. SoloP1 e soloP2:2188frames cada,25coletas/18blocos do ativo, inativo0, topo/final/reinicio. Recuperacao4432frames, blocos removidos10/2; fixture de secao remove2/1 mantendo outras secoes e cinco checkpoints. Todos passed e mesmo hash/commit8a7f3bd. Capturas revistas de menu, retrato, coop, solo e abertura.
+- LDMT Final3 altera apenas descricoes/observacoes para menu, abertura e participantes ativos. Plan, pesos,1512formulas, IDs e partes nativas preservados; visualizacao dos campos alterados conferida. Fontes originais intactas.
+- Pacote delivery/JUNTOS_Entrega.zip atualizado com build, instrucoes, planilhas, relatorios e capturas. Nenhum push/merge master/upload. Falta rodada humana de teclado/ghosting/conforto/clareza, compatibilidade em outro PC e envio autorizado.

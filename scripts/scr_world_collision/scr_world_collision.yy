@@ -1,0 +1,10 @@
+{
+  "$GMScript":"v1",
+  "%Name":"scr_world_collision",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scr_world_collision",
+  "parent":{"name":"world","path":"folders/world.yy",},
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
