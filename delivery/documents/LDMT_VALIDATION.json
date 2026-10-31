@@ -1,8 +1,31 @@
 {
+  "scores": {
+    "1": 0,
+    "2": -1,
+    "3": 1,
+    "4": -1,
+    "5": -1,
+    "6": 0
+  },
+  "positive": {
+    "1": 0,
+    "2": 1,
+    "3": 3,
+    "4": 2,
+    "5": 1,
+    "6": 0
+  },
+  "support": {
+    "1": 0,
+    "2": -2,
+    "3": -2,
+    "4": -3,
+    "5": -2,
+    "6": 0
+  },
+  "source_preserved": "C:\\Users\\natan\\OneDrive\\Documentos\\ChatGPT\\GameJam\\LDMT_Game_Jam.xlsx",
+  "formulas_unchanged": true,
   "formula_count": 1512,
-  "formulas_identical": true,
-  "original_sha256": "618ff6b50ee193c04ace0f087108757302032eb3993d823f6d541fd0a0cd2456",
-  "plan_sha256": "2e4fc207c5db0cf8c001a06354f2249e2491ff15b346117e4bd5d6a427a78b51",
-  "final_sha256": "6dc6f9238848a46e72e550fb119720c24a95421ccc907b7e394b06972fad2e73",
+  "fixed_ids_preserved": true,
   "all_xml_parse": true
 }

@@ -109,3 +109,13 @@ Usuário avaliar a proposta. Não lançar agentes nesta etapa. Nenhuma nota Obsi
 - Entrega: delivery/JUNTOS_Entrega.zip com windows/, documents/Plan+Final, controles, texto de submissao, manifesto e capturas. Windows satisfaz formato das regras; nao foi feita WebGL. Originalidade/proveniencia e uso de imagens geradas com IA documentados; sem recursos de jogos comerciais.
 - Falta externa: upload autorizado no canal da organizacao e eventual ID oficial da equipe. Recomendado teste humano de conforto/ghosting e compatibilidade de planilha no Excel; nao foram declarados como realizados. Nenhum push, merge em master ou publicacao.
 - Reproducao: tools/build_windows.ps1; tools/run_qa.ps1 [-Recovery]; tools/package_release.py. Handoff para Natan/Guilherme em docs/HANDOFF.md. Um integrador deve editar gameJam.yyp e Room1; reabrir projeto na IDE antes de salvar buffers antigos.
+
+
+## Revisao de morte por secao ? 2026-10-31
+
+- Pedido novo substitui a preservacao integral da torre: morte/recuperacao volta ao checkpoint e limpa somente os blocos construidos na secao atual, dos dois jogadores. Plataformas fixas, outras secoes e estoques preservados; sem reembolso.
+- Implementado section_id por faixa vertical de192px em cada bloco, com limpeza por checkpoint_level. Lista de IDs removiveis e preservados evita pular instancias ao destruir; partner vivo nao e reposicionado.
+- Codigo: d2ce2bf na branch jam/mvp-complete. Master preservada, sem push/merge/publicacao.
+- Teste focado no Runner passou: apagou dois blocos (um de cada construtor) na secao1, conservou secoes0/2 e cinco plataformas, retornou ao checkpoint e conservou estoque. Depois validou tambem a secao0.
+- Replays completos repetidos no executavel distribuido: partida normal e partida com quedas/inimigo passaram ate ambos no topo, final e reinicio. Recuperacoes removeram10 blocos no P1 e2 no P2; verificacao de escopo correta. Ajuste da rota do bot para contornar tetos de blocos preservados, sem mudar colisoes do jogo.
+- LDMT Final v2 e instrucoes revisadas; Plan inicial preservado. ZIP de entrega substituido com a nova build e manifesto/testes atualizados. SHA256 data.win: 3F533A950BB32EA32024AF7B27C8A8A1D4685D44BF6FD086AED2FC52BC10E9F5.

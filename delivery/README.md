@@ -1,6 +1,6 @@
-﻿# JUNTOS
+# JUNTOS
 
-Cooperativo local para duas pessoas. Coletem materiais, construam a mesma torre e alcancem o topo juntos. A patrulha devolve o personagem ao ultimo checkpoint; torre e inventario permanecem.
+Cooperativo local para duas pessoas. Coletem materiais, construam a mesma torre e alcancem o topo juntos. Ao morrer por queda ou patrulha, o personagem volta ao ultimo checkpoint e os blocos construidos pelos dois naquela secao desaparecem. Plataformas fixas e outras secoes permanecem. O estoque continua igual, sem reembolso dos blocos removidos.
 
 ## Executar
 Extraia todo o ZIP e abra windows/Jogar.cmd ou windows/JUNTOS.exe. Mantenha data.win ao lado do executavel. Windows 64 bits / DirectX 11; nao exige instalar o GameMaker.

@@ -21,3 +21,7 @@ Propriedade de arquivos: um integrador edita .yyp e Room1. Mudancas em controles
 Pendencias externas: enviar no canal da organizacao; confirmar eventual ID oficial de equipe; rodada humana de conforto/ghosting. Sem bloqueio tecnico observado no fluxo automatizado.
 
 Codigo do MVP: 9cde5a3. Pacote final: delivery/JUNTOS_Entrega.zip. Relatorios e hashes em delivery/tests e MANIFEST.json.
+
+Regra atual de morte: checkpoint_level identifica o trecho ate o proximo checkpoint. Cada bloco tem section_id pela altura (trechos de192px). scr_player_recover apaga os blocos construidos de ambos nessa secao, preserva is_checkpoint e demais secoes, e conserva o estoque sem reembolso. Teste focado: tools/run_qa.ps1 -SectionReset.
+
+Mudanca de morte e limpeza por secao: commit d2ce2bf. Os replays e a fixture de secoes foram executados na build com essa regra.

@@ -6,10 +6,13 @@ D=R/'delivery'
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest().upper()
 normal=json.loads((D/'tests/qa_result.json').read_text(encoding='utf-8-sig'))
 recovery=json.loads((D/'tests/qa_recovery_result.json').read_text(encoding='utf-8-sig'))
+section=json.loads((D/'tests/qa_section_reset_result.json').read_text(encoding='utf-8-sig'))
+assert section['passed'] and section['data_sha256']==sha(D/'windows/data.win')
 for report in [normal,recovery]:
  assert report['passed'] and report['restarted']
  assert report['data_sha256']==sha(D/'windows/data.win')
 assert recovery['enemy_hits']>0 and recovery['fall_hits']>0
+assert normal['section_scope_ok'] and recovery['section_scope_ok']
 commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R).decode().strip()
 report=f'''# Verificacao do MVP JUNTOS
 
@@ -27,9 +30,12 @@ Fonte de jogo: {normal['source_commit']}. Base preservada: 938089d. Runtime Game
 | Checkpoint de topo dos dois | 5 / 5 | 5 / 5 |
 | Quedas recuperadas P1 | {normal['fall_hits']:.0f} | {recovery['fall_hits']:.0f} |
 | Contatos com inimigo P2 | {normal['enemy_hits']:.0f} | {recovery['enemy_hits']:.0f} |
+| Blocos removidos nas mortes P1 / P2 | {normal['p1_removed_blocks']:.0f} / {normal['p2_removed_blocks']:.0f} | {recovery['p1_removed_blocks']:.0f} / {recovery['p2_removed_blocks']:.0f} |
 | Final e reinicio verificados | Sim | Sim |
 
-Entrada do titulo, introducao, queda, coleta, consumo de materiais, construcao pelos dois, colisao, camera vertical, uso da torre comum, chegada conjunta e final ocorreram no motor real. O teste de reinicio chama room_restart e verifica titulo ativo, estoques zerados e somente cinco plataformas iniciais. Recuperacoes verificam conservacao de materiais e blocos. O modo QA injeta acoes nos mesmos metodos dos controladores: nao concede itens, nao teleporta ao topo e nao ignora inimigos. A unica reposicao de posicao e a recuperacao normal do proprio jogo.
+Entrada do titulo, introducao, queda, coleta, consumo de materiais, construcao pelos dois, colisao, camera vertical, uso da torre comum, chegada conjunta e final ocorreram no motor real. O teste de reinicio chama room_restart e verifica titulo ativo, estoques zerados e somente cinco plataformas iniciais. Recuperacoes verificam conservacao do estoque e remocao restrita aos blocos construidos da secao do checkpoint atual, incluindo os de ambos os jogadores. Plataformas fixas e outras secoes permanecem. Os replays de partida completa injetam acoes nos mesmos metodos dos controladores: nao concedem itens, nao teleportam ao topo e nao ignoram inimigos. A unica reposicao de posicao da partida completa e a recuperacao normal do proprio jogo.
+
+O teste focado de secoes usa uma fixture separada: cria blocos identificados em tres secoes e inventarios conhecidos, chama a mesma recuperacao e verifica IDs. Removeu dois blocos da secao1 (dos dois construtores), manteve as secoes0/2 e as cinco plataformas, retornou ao checkpoint e conservou o estoque. Depois verificou tambem a limpeza da secao0, mantendo a secao2. Resultado: {section['passed']}. A fixture nao e usada como evidencia de progressao; as duas partidas completas acima sao por acoes.
 
 A simulacao e acelerada; numero de quadros nao e tempo de conclusao de pessoas nem medida de diversao. Capturas QA sao produzidas pelo motor apos desenhar. O executavel tambem abriu sem argumentos, carregando data.win na pasta distribuida. A API de controle da interface ficou indisponivel (native pipe), portanto nao foi feito teste final com teclas fisicas.
 
@@ -39,7 +45,7 @@ A simulacao e acelerada; numero de quadros nao e tempo de conclusao de pessoas n
 2. Plataformas de descanso bloqueavam saltos: passaram a permitir atravessar de baixo para cima. Blocos do jogador continuam solidos.
 3. Verificacao de apoio incluia o corpo inteiro: agora consulta apenas a faixa dos pes.
 4. Vitoria acontecia antes do pouso: exige ambos apoiados no topo.
-5. Recuperacao de queda maior que 160 px preserva estoque e torre; inimigo tambem usa esse mecanismo.
+5. Recuperacao de queda maior que 160 px e por inimigo volta ao checkpoint e limpa apenas a secao atual. Estoque, plataformas fixas e outras secoes sao preservados; material gasto nao e devolvido.
 6. Recortes de idle foram medidos por componentes de alpha e normalizados com origem nos pes.
 
 ## LDMT e requisitos
@@ -81,15 +87,18 @@ def workbook_facts(p):
 sf,si=workbook_facts(source)
 for p in [D/'documents/LDMT_JUNTOS_Plan.xlsx',D/'documents/LDMT_JUNTOS_Final.xlsx']:
  f,i=workbook_facts(p);assert f==sf and i==si
+validation=json.loads((D/'documents/LDMT_VALIDATION.json').read_text())
+validation.update({'formula_count':len(sf),'fixed_ids_preserved':True,'all_xml_parse':True})
+(D/'documents/LDMT_VALIDATION.json').write_text(json.dumps(validation,indent=2))
 payload=[]
 for p in (D/'windows').iterdir():
  if p.is_file():payload.append((p,'windows/'+p.name))
 for n in ['LDMT_JUNTOS_Plan.xlsx','LDMT_JUNTOS_Final.xlsx','LDMT_VALIDATION.json']:payload.append((D/'documents'/n,'documents/'+n))
 for n in ['README.md','TEST_REPORT.md','ART_AND_SOURCES.md','SUBMISSION.txt']:payload.append((D/n,n))
-for name,label in [('qa_20.png','intro.png'),('qa_300.png','gameplay.png'),('qa_1569.png','final.png')]:
+for name,label in [('qa_20.png','intro.png'),('qa_300.png','gameplay.png'),('qa_'+str(int(recovery['frames'])-120)+'.png','final.png')]:
  p=D/'tests'/name
  if p.exists():payload.append((p,'screenshots/'+label))
-manifest={'game_commit':normal['source_commit'],'branch':'jam/mvp-complete','runtime':'2026.0.0.23','normal_passed':normal['passed'],'recovery_passed':recovery['passed'],'files':{n:sha(p) for p,n in payload}}
+manifest={'game_commit':normal['source_commit'],'branch':'jam/mvp-complete','runtime':'2026.0.0.23','normal_passed':normal['passed'],'recovery_passed':recovery['passed'],'section_reset_passed':section['passed'],'files':{n:sha(p) for p,n in payload}}
 (D/'MANIFEST.json').write_text(json.dumps(manifest,indent=2))
 payload.append((D/'MANIFEST.json','MANIFEST.json'))
 out=D/'JUNTOS_Entrega.zip'

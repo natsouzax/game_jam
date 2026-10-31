@@ -22,11 +22,11 @@ for sh,ranges in data.items():
   for dy,row in enumerate(rows):
    for dx,v in enumerate(row):flat[sh][f'{colstr(c+dx)}{r+dy}']=v
 if '--final' in sys.argv:
- flat['Overview']['F6']='MVP Final 1'
+ flat['Overview']['F6']='MVP Final 2'
  flat['Overview']['F7']='Final'
  flat['Segments']['K10']='Teste Runner: peca presa em teto; queda passou a nascer abaixo da cobertura.'
- flat['Segments']['K11']='Plataformas de descanso atravessaveis de baixo para cima; inimigo provoca recuperacao conservando estoque/torre.'
- flat['Segments']['K12']='Recuperacao apos queda maior que 160 px; camera acompanha o jogador mais baixo.'
+ flat['Segments']['K11']='Plataformas de descanso atravessaveis de baixo para cima; morte devolve ao checkpoint e remove blocos construidos de ambos somente na secao atual.'
+ flat['Segments']['K12']='Queda maior que 160 px limpa a secao do checkpoint, preserva estoque sem reembolso e mantem plataformas fixas/outras secoes; teste por IDs passou.'
  flat['Segments']['K13']='Vitoria exige os dois pousados no topo; teste automatizado percorre as mesmas colisoes e entradas.'
  flat['Segments']['K14']='Final visual com seis avatares abstratos; reinicio recria sala e zera estoque.'
 flat['Overview']['F8']=46326
