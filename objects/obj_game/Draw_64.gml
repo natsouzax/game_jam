@@ -1,27 +1,14 @@
 var _state=global.game_state;
-if(_state=="title" || _state=="intro") {
-    draw_set_alpha(0.94);draw_set_color(make_color_rgb(26,27,38));draw_rectangle(0,0,1366,768,false);draw_set_alpha(1);
-    draw_set_halign(fa_center);draw_set_valign(fa_middle);draw_set_color(make_color_rgb(239,211,148));
-    draw_text_transformed(683,190,"JUNTOS",5,5,0);
-    for(var _i=0;_i<2;_i++) {
-        var _x=565+_i*236;
-        draw_set_color((_i==0?global.ready_one:global.ready_two)?make_color_rgb(115,215,153):make_color_rgb(92,89,101));
-        draw_circle(_x,420,42,false);draw_set_color(make_color_rgb(32,33,44));
-        draw_triangle(_x-13,429,_x+13,429,_x,402,false);
-    }
-    if(_state=="intro") {
-        draw_set_color(make_color_rgb(244,216,132));var _gy=340+sin(global.game_timer/20)*10;
-        draw_circle(683,_gy,62,true);draw_circle(683,_gy,46,true);
-        draw_triangle(658,_gy+30,708,_gy+30,683,_gy-45,false);
-        draw_line_width(590,470,683,535,5);draw_line_width(776,470,683,535,5);
-    }
-    draw_set_halign(fa_left);draw_set_valign(fa_top);
-} else if(_state=="play") {
-    var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
+if(_state=="title")scr_draw_title_menu();
+else if(_state=="intro")scr_draw_intro();
+else if(_state=="play") {
     for(var _j=0;_j<2;_j++) {
-        var _p=(_j==0?_p1:_p2);draw_set_color(_j==0?make_color_rgb(80,220,215):make_color_rgb(247,181,77));
-        draw_circle(40+_j*44,36,12,false);
-        if(_p.y<camera_y+60)draw_triangle(40+_j*44,55,32+_j*44,68,48+_j*44,68,false);
+        var _p=instance_find((_j==0?obj_player_p1:obj_player_p2),0);
+        if(!_p.active_player)continue;
+        var _hud_x=(global.player_count==1?40:40+_j*54);
+        draw_set_color(_j==0?make_color_rgb(80,220,215):make_color_rgb(247,181,77));
+        draw_circle(_hud_x,36,13,false);
+        if(_p.y<camera_y+60)draw_triangle(_hud_x,55,_hud_x-8,68,_hud_x+8,68,false);
     }
 } else if(_state=="ending" && ending_timer>120) {
     var _fade=clamp((ending_timer-120)/100,0,1);
@@ -52,4 +39,4 @@ if(_state=="title" || _state=="intro") {
     }
 }
 draw_set_alpha(1);draw_set_color(c_white);
-if(global.qa && (global.qa_frame==20 || global.qa_frame==300 || global.qa_frame mod 1800==0 || (global.game_state=="ending" && ending_timer==300)))screen_save("qa_"+string(global.qa_frame)+".png");
+if(global.qa)scr_qa_capture();

@@ -25,6 +25,9 @@
   },
   "name":"gameJam",
   "resources":[
+    {"id":{"name":"spr_juntos_atlas","path":"sprites/spr_juntos_atlas/spr_juntos_atlas.yy"}},
+    {"id":{"name":"scr_qa","path":"scripts/scr_qa/scr_qa.yy"}},
+    {"id":{"name":"scr_presentation","path":"scripts/scr_presentation/scr_presentation.yy"}},
     {"id":{"name":"fire","path":"objects/fire/fire.yy",},},
     {"id":{"name":"obj_build_block","path":"objects/obj_build_block/obj_build_block.yy",},},
     {"id":{"name":"obj_ground","path":"objects/obj_ground/obj_ground.yy",},},

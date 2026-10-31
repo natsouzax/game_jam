@@ -1,17 +1,17 @@
-﻿param([switch]$Recovery,[switch]$SectionReset)
+﻿param([switch]$Recovery,[switch]$SectionReset,[ValidateSet(0,1,2)][int]$Solo=0)
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
 $folder=Join-Path $projectRoot 'delivery\windows'
 $testFolder=Join-Path $projectRoot 'delivery\tests'
 $saveFolder=Join-Path $env:LOCALAPPDATA 'gameJam'
-$filename=if($SectionReset){'qa_section_reset_result.json'}elseif($Recovery){'qa_recovery_result.json'}else{'qa_result.json'}
+$filename=if($SectionReset){'qa_section_reset_result.json'}elseif($Solo -gt 0){"qa_solo${Solo}_result.json"}elseif($Recovery){'qa_recovery_result.json'}else{'qa_result.json'}
 $resultPath=Join-Path $saveFolder $filename
 if(Test-Path -LiteralPath $resultPath){Remove-Item -LiteralPath $resultPath}
 $startedAt=Get-Date
-$mode=if($SectionReset){'--qa-section-reset'}elseif($Recovery){'--qa-recovery'}else{'--qa'}
+$mode=if($SectionReset){'--qa-section-reset'}elseif($Solo -gt 0){"--qa-solo${Solo}"}elseif($Recovery){'--qa-recovery'}else{'--qa'}
 $argsLine='-game "'+(Join-Path $folder 'data.win')+'" '+$mode
 $process=Start-Process -FilePath (Join-Path $folder 'JUNTOS.exe') -ArgumentList $argsLine -WorkingDirectory $folder -WindowStyle Hidden -PassThru
-if(!$process.WaitForExit(90000)){Stop-Process -Id $process.Id;throw 'QA timed out'}
+if(!$process.WaitForExit(60000)){Stop-Process -Id $process.Id;throw 'QA timed out'}
 if(!(Test-Path -LiteralPath $resultPath)){throw 'QA did not write a report'}
 New-Item -ItemType Directory -Force $testFolder | Out-Null
 Copy-Item -LiteralPath $resultPath -Destination (Join-Path $testFolder $filename) -Force

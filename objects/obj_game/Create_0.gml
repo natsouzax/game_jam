@@ -1,8 +1,17 @@
 global.game_state="title";
-global.game_timer=0;global.ready_one=false;global.ready_two=false;
+global.game_timer=0;
+global.menu_mode=1;global.menu_stage=0;global.solo_character=0;global.player_count=2;
+global.intro_seen=[false,false,false];global.qa_menu_ok=false;
 global.qa_section_test=false;global.qa_recovery_test=false;global.simultaneous_frames=0;
-global.qa=false;global.qa_frame=0;global.qa_stage=0;global.qa_ending_seen=false;
-for(var _a=1;_a<=parameter_count();_a++) {if(parameter_string(_a)=="--qa-section-reset"){global.qa=true;global.qa_section_test=true;}if(parameter_string(_a)=="--qa")global.qa=true;if(parameter_string(_a)=="--qa-recovery") {global.qa=true;global.qa_recovery_test=true;}}
+global.qa=false;global.qa_frame=0;global.qa_stage=0;global.qa_ending_seen=false;global.qa_solo=-1;
+for(var _a=1;_a<=parameter_count();_a++) {
+    var _arg=parameter_string(_a);
+    if(_arg=="--qa-section-reset"){global.qa=true;global.qa_section_test=true;}
+    if(_arg=="--qa")global.qa=true;
+    if(_arg=="--qa-recovery"){global.qa=true;global.qa_recovery_test=true;}
+    if(_arg=="--qa-solo1"){global.qa=true;global.qa_solo=0;}
+    if(_arg=="--qa-solo2"){global.qa=true;global.qa_solo=1;}
+}
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
 if(global.qa)display_reset(0,false);
 random_set_seed(global.qa ? 7231 : current_time);
