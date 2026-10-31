@@ -3,12 +3,6 @@ for(var _i=0;_i<18;_i++) {
     var _x=_i*84;draw_set_color(make_color_rgb(52+_i mod 3*6,43,51));
     draw_rectangle(_x,560+(_i mod 4)*110,_x+54,1408,false);
 }
-draw_set_color(make_color_rgb(151,118,79));
-for(var _j=0;_j<5;_j++) {
-    var _y=1216-_j*192;
-    draw_circle(672,_y-50,10,true);
-    draw_triangle(665,_y-75,679,_y-75,672,_y-84,false);
-}
 if(global.game_state=="ending") {
     var _amount=clamp(ending_timer/180,0,1);
     draw_set_color(make_color_rgb(108,185,108));

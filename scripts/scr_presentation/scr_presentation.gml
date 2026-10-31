@@ -18,7 +18,7 @@ function scr_begin_intro() {
     for(var _i=0;_i<2;_i++) {
         var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
         _p.active_player=(global.player_count==2 || _i==global.solo_character);
-        if(global.player_count==1 && _p.active_player){_p.x=672;_p.respawn_x=672;_p.facing=1;}
+        if(global.player_count==1 && _p.active_player){_p.x=(_i==0?270:1096);_p.respawn_x=_p.x;_p.facing=1;}
     }
     global.game_state="intro";global.game_timer=0;
     global.intro_scene=0;
@@ -40,10 +40,11 @@ function scr_menu_input(_direction,_confirm,_back) {
 
 function scr_player_controls() {
     if(!active_player)return;
-    if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2]);}
+    if(dead)return;
+    if(global.qa) {var _input=scr_qa_input();scr_player_tick(_input[0],_input[1],_input[2],false);}
     else if(global.player_count==1 || player_number==0)
-        scr_player_tick(keyboard_check(ord("D"))-keyboard_check(ord("A")),keyboard_check_pressed(ord("W")),keyboard_check_pressed(ord("E")));
-    else scr_player_tick(keyboard_check(vk_right)-keyboard_check(vk_left),keyboard_check_pressed(vk_up),keyboard_check_pressed(vk_enter));
+        scr_player_tick(keyboard_check(ord("D"))-keyboard_check(ord("A")),keyboard_check_pressed(ord("W")),keyboard_check_pressed(ord("E")),keyboard_check(ord("W")));
+    else scr_player_tick(keyboard_check(vk_right)-keyboard_check(vk_left),keyboard_check_pressed(vk_up),keyboard_check_pressed(vk_enter),keyboard_check(vk_up));
 }
 
 function scr_ui_panel(_l,_t,_r,_b,_selected) {

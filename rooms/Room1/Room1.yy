@@ -7,7 +7,6 @@
   "inheritLayers":false,
   "instanceCreationOrder":[
     {"name":"inst_mvp_controller","path":"rooms/Room1/Room1.yy"},
-    {"name":"inst_ground_2C37A4B5","path":"rooms/Room1/Room1.yy",},
     {"name":"inst_126CDB91","path":"rooms/Room1/Room1.yy",},
     {"name":"inst_77EBA64B","path":"rooms/Room1/Room1.yy",},
     {"name":"inst_1E572407","path":"rooms/Room1/Room1.yy",},

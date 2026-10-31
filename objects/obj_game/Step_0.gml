@@ -1,6 +1,7 @@
 global.game_timer++;
 var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
 if(_p1==noone || _p2==noone)exit;
+if(global.restart_game){global.restart_game=false;room_restart();exit;}
 if(global.qa_section_test) {
     var _section_report=scr_qa_section_reset_test(_p1,_p2);
     var _section_file=file_text_open_write("qa_section_reset_result.json");
@@ -30,29 +31,69 @@ if(global.game_state=="title") {
         scr_music(mus_game);
     }
 } else if(global.game_state=="play") {
-    var _low_y=-10000;var _at_top=true;
+    var _high_y=100000;
     for(var _i=0;_i<2;_i++) {
         var _p=(_i==0?_p1:_p2);
-        if(!_p.active_player)continue;
-        _low_y=max(_low_y,_p.y);
-        _at_top=_at_top && _p.grounded && abs(_p.y-448)<2 && _p.x>500 && _p.x<844;
+        if(!_p.active_player || _p.dead)continue;
+        _high_y=min(_high_y,_p.y);
     }
+    if(_high_y==100000) _high_y=camera_y+400;
+    camera_y=lerp(camera_y,clamp(_high_y-600,0,room_height-768),0.09);camera_set_view_pos(cam,0,camera_y);
+    // respawn management
+    for(var _di=0;_di<2;_di++) {
+        var _dp=(_di==0?_p1:_p2);
+        if(_dp.dead) {
+            _dp.respawn_timer--;
+            if(_dp.respawn_timer<=0) {
+                _dp.dead=false;_dp.active_player=true;_dp.player_lives=2;
+                with(_dp) scr_player_recover();
+            }
+        }
+    }
+    if(global.death_window_timer>0) global.death_window_timer--;
+    // resource spawn
     spawn_timer--;
-    if(instance_number(obj_material)==0 && spawn_timer<=0) {
-        var _receiver=(global.player_count==1?(global.solo_character==0?_p1:_p2):(spawn_side mod 2==0?_p1:_p2));spawn_side++;
-        var _drop_x=clamp(_receiver.x+irandom_range(-14,14),64,room_width-64);
-        var _drop_y=max(20,_receiver.y-180);
+    if(instance_number(obj_material)<4 && spawn_timer<=0) {
+        var _drop_x=room_width/2+irandom_range(-160,160);
+        var _drop_y=camera_y+16;
         for(var _si=0;_si<instance_number(obj_world_solid);_si++) {
             var _roof=instance_find(obj_world_solid,_si);
-            if(_drop_x+18>_roof.x && _drop_x-18<_roof.x+_roof.solid_width && _roof.y<_receiver.y-40 && _roof.y+_roof.solid_height>_drop_y)
-                _drop_y=max(_drop_y,_roof.y+_roof.solid_height+20);
+            if(_drop_x+18>_roof.x && _drop_x-18<_roof.x+_roof.solid_width
+                && _drop_y+18>_roof.y && _drop_y-18<_roof.y+_roof.solid_height)
+                _drop_y=_roof.y+_roof.solid_height+20;
         }
-        _drop_y=min(_drop_y,_receiver.y-45);
         instance_create_layer(_drop_x,_drop_y,"Instances_1",obj_material);
-        spawn_timer=38;
+        spawn_timer=120;
     }
-    camera_y=lerp(camera_y,clamp(_low_y-600,0,room_height-768),0.09);camera_set_view_pos(cam,0,camera_y);
-    if(_at_top) {global.game_state="ending";ending_timer=0;global.game_timer=0;scr_music(mus_ending);scr_sfx(sfx_victory,0,0.9);}
+    // life item spawn
+    life_spawn_timer--;
+    if(life_spawn_timer<=0) {
+        life_spawn_timer=irandom_range(600,1200);
+        if(instance_number(obj_life_item)<2) {
+            var _lx=irandom_range(64,room_width-64);
+            var _ly=camera_y+16;
+            for(var _si2=0;_si2<instance_number(obj_world_solid);_si2++) {
+                var _roof2=instance_find(obj_world_solid,_si2);
+                if(_lx+14>_roof2.x && _lx-14<_roof2.x+_roof2.solid_width
+                    && _ly+14>_roof2.y && _ly-14<_roof2.y+_roof2.solid_height)
+                    _ly=_roof2.y+_roof2.solid_height+20;
+            }
+            instance_create_layer(_lx,_ly,"Instances_1",obj_life_item);
+        }
+    }
+    // finish line
+    var _finish_y=220;
+    var _all_finished=true;var _any_active=false;
+    for(var _fi=0;_fi<2;_fi++) {
+        var _fp=(_fi==0?_p1:_p2);
+        if(!_fp.active_player || _fp.dead) continue;
+        _any_active=true;
+        if(_fp.y >= _finish_y) _all_finished=false;
+    }
+    if(_any_active && _all_finished) {
+        if(room_next(room)!=-1) { room_goto_next(); exit; }
+        else { global.game_state="ending"; ending_timer=0; global.game_timer=0; scr_music(mus_ending); scr_sfx(sfx_victory,0,0.9); }
+    }
 } else if(global.game_state=="ending") {
     ending_timer++;
     if(ending_timer>420 && (keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up)||global.qa)) {

@@ -27,12 +27,12 @@ function scr_qa_summary(_p1,_p2) {
     var _inactive_ok=true;
     for(var _i=0;_i<2;_i++) {
         var _p=(_i==0?_p1:_p2);
-        if(_p.active_player)_ok=_ok && _p.collected_total>0 && _p.built_total>0 && _p.checkpoint_level==5;
+        if(_p.active_player)_ok=_ok && _p.collected_total>0 && _p.built_total>0 && _p.checkpoint_level==0;
         else _inactive_ok=_inactive_ok && _p.collected_total==0 && _p.built_total==0 && _p.recoveries==0 && _p.checkpoint_level==0;
     }
     _ok=_ok && _inactive_ok;
     if(global.player_count==2)_ok=_ok && global.simultaneous_frames>0 && _p1.shared_uses>0 && _p2.shared_uses>0;
-    if(global.qa_recovery_test)_ok=_ok && _p1.fall_hits>0 && _p2.enemy_hits>0 && _p1.recovery_valid && _p2.recovery_valid;
+    if(global.qa_recovery_test)_ok=_ok && _p1.fall_hits>0 && _p2.fall_hits>0 && _p1.recovery_valid && _p2.recovery_valid;
     return {passed:_ok,ending:true,frames:global.qa_frame,players:global.player_count,solo_character:global.solo_character,
         menu_ok:global.qa_menu_ok,intro_all_scenes:global.intro_seen[0] && global.intro_seen[1] && global.intro_seen[2],inactive_untouched:_inactive_ok,
         p1_collected:_p1.collected_total,p2_collected:_p2.collected_total,p1_built:_p1.built_total,p2_built:_p2.built_total,
@@ -51,11 +51,6 @@ function scr_qa_capture() {
 }
 function scr_qa_input() {
     var _move=0;var _jump=false;var _build=false;
-    if(global.qa_recovery_test && player_number==0 && checkpoint_level>=1 && fall_hits==0)return [1,grounded,false];
-    if(global.qa_recovery_test && player_number==1 && checkpoint_level>=2 && enemy_hits==0) {
-        var _enemy=instance_find(obj_enemy,0);
-        if(_enemy!=noone)return [sign(_enemy.x-x),grounded,false];
-    }
     if(qa_jump_cooldown>0)qa_jump_cooldown--;
     if(qa_target!=noone && !instance_exists(qa_target))qa_target=noone;
     if(qa_target!=noone && grounded && y<=qa_target.y+3)qa_target=noone;
@@ -117,7 +112,7 @@ function scr_qa_section_reset_test(_p1,_p2) {
     }
     var _ok=_section_one_ok && !instance_exists(_earlier) && instance_exists(_later)
         && _p2.y==1408 && _p2.material_count==2 && _p2.reset_blocks_total==1
-        && _fixed==5 && instance_number(obj_build_block)==6 && _p1.recovery_valid && _p2.recovery_valid;
+        && _fixed==0 && instance_number(obj_build_block)==1 && _p1.recovery_valid && _p2.recovery_valid;
     return {passed:_ok,section_one_removed:_p1.reset_blocks_total,section_zero_removed:_p2.reset_blocks_total,
         fixed_platforms:_fixed,later_section_preserved:instance_exists(_later),both_builders_removed:_section_one_ok,
         inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==1216 && _p2.y==1408};
