@@ -1,0 +1,1 @@
+{"$GMScript": "v1", "%Name": "scr_mvp", "isCompatibility": false, "isDnD": false, "name": "scr_mvp", "parent": {"name": "world", "path": "folders/world.yy"}, "resourceType": "GMScript", "resourceVersion": "2.0"}

@@ -1,10 +1,7 @@
-draw_set_color(make_color_rgb(69, 51, 45));
-draw_rectangle(x, y, x + 31, y + 31, false);
-draw_set_color(make_color_rgb(133, 91, 65));
-draw_rectangle(x + 1, y + 1, x + 30, y + 30, true);
-draw_line(x + 2, y + 10, x + 29, y + 10);
-draw_line(x + 2, y + 21, x + 29, y + 21);
-draw_line(x + 10, y + 2, x + 10, y + 9);
-draw_line(x + 22, y + 12, x + 22, y + 20);
-draw_line(x + 7, y + 23, x + 7, y + 29);
+draw_set_color(is_checkpoint?make_color_rgb(88,105,103):make_color_rgb(117,84,65));
+draw_rectangle(x,y,x+solid_width-1,y+solid_height-1,false);
+draw_set_color(make_color_rgb(189,151,105));draw_rectangle(x,y,x+solid_width-1,y+3,false);
+if(is_checkpoint) {
+    draw_set_color(make_color_rgb(117,205,169));draw_circle(x+24,y-9,8,true);draw_circle(x+solid_width-24,y-9,8,true);
+} else {draw_set_color(make_color_rgb(68,58,56));draw_rectangle(x+3,y+6,x+solid_width-4,y+solid_height-4,true);}
 draw_set_color(c_white);

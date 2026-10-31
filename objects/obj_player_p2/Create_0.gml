@@ -1,13 +1,1 @@
-depth = 0;
-ground_y = room_height - 96;
-move_speed = 5;
-jump_speed = -11;
-gravity_speed = 0.55;
-body_half_width = 12;
-body_height = 64;
-x = room_width * 0.65;
-y = ground_y;
-depth = -10;
-vy = 0;
-facing = 1;
-material_count = 0;
+scr_player_init(1);

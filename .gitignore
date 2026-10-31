@@ -60,3 +60,7 @@ Temporary Items
 
 # GMRT build directory
 Build
+# Local build and authoring dependencies
+tools/node_modules/
+delivery/windows/
+delivery/*.zip

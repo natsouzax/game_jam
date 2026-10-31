@@ -1,8 +1,9 @@
-function scr_world_aabb_solid(_left, _top, _right, _bottom) {
+function scr_world_aabb_solid(_left, _top, _right, _bottom, _skip_platforms=false) {
     var _count = instance_number(obj_world_solid);
     for (var _i = 0; _i < _count; _i++) {
         var _solid = instance_find(obj_world_solid, _i);
         if (_solid != noone
+        && !(_skip_platforms && _solid.is_checkpoint)
         && _left < _solid.x + _solid.solid_width
         && _right > _solid.x
         && _top < _solid.y + _solid.solid_height
