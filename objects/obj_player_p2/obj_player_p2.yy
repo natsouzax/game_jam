@@ -10,8 +10,8 @@
   "name":"obj_player_p2",
   "overriddenProperties":[],
   "parent":{
-    "name":"gameJam",
-    "path":"gameJam.yyp",
+    "name":"player2",
+    "path":"folders/player2.yy",
   },
   "parentObjectId":null,
   "persistent":false,
@@ -31,10 +31,7 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":{
-    "name":"spr_player1_sheet",
-    "path":"sprites/spr_player1_sheet/spr_player1_sheet.yy",
-  },
+  "spriteId":null,
   "spriteMaskId":null,
   "visible":true,
 }

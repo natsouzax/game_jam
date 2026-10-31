@@ -31,10 +31,7 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":{
-    "name":"Sprite10",
-    "path":"sprites/Sprite10/Sprite10.yy",
-  },
+  "spriteId":null,
   "spriteMaskId":{
     "name":"spr_player1_sheet",
     "path":"sprites/spr_player1_sheet/spr_player1_sheet.yy",
