@@ -1,6 +1,6 @@
 # Cutscene final (GameMaker)
 
-O gatilho e a chegada dos jogadores ativos ao topo. A sequencia usa 4780 quadros a 60 FPS (cerca de 80 s) e e silenciosa: so imagem, sem dialogo. E/Enter salta para o cartao final apos os primeiros 30 quadros. W/Cima reinicia a partida quando o cartao ja mostra a dica. Durante a cutscene, todo o audio e interrompido.
+O gatilho e a chegada dos jogadores ativos ao topo. A sequencia usa 4780 quadros a 60 FPS (cerca de 80 s) e e silenciosa: so imagem, sem dialogo. E/Enter salta para o cartao final apos os primeiros 30 quadros. W/Cima reinicia a partida quando o cartao final ja passou de 3 s. Durante a cutscene, todo o audio e interrompido.
 
 A ideia: a divindade ate consegue mostrar um mundo melhor, mas nao o constroi; quem precisa fazer isso sao os jogadores. O jogo acaba, os quatro jogadores se olham e percebem que quem precisa mudar sao eles. Cada um sai sozinho e faz uma coisa boa pelo mundo.
 
@@ -12,9 +12,11 @@ A ideia: a divindade ate consegue mostrar um mundo melhor, mas nao o constroi; q
 | 1580-1820 | 26-30 s | Na TV apagada reaparece a silhueta da divindade apontando para fora da tela, para eles. Um brilho quente sobre cada um (a ficha cai); levantam-se e saem sozinhos |
 | 1820-3900 | 30-65 s | Quatro cenas de 520 quadros, uma por pessoa, com zoom lento: varrer a praca, levar uma lanterna a um vizinho, plantar mudas no canteiro, regar as flores |
 | 3900-4600 | 65-77 s | Plano aberto: a cidade vai se curando enquanto os quatro estao em pontos diferentes do terraco; a divindade aparece pequena no brilho do sol, de bracos abertos, e some |
-| 4600-4780 | 77-80 s | Cartao final TOGETHER; a dica de reinicio aparece em 4780 |
+| 4600-4780 | 77-80 s | Cartao final TOGETHER (W/Cima reinicia depois de 4780) |
 
-A narrativa e mostrada em legendas em ingles na barra inferior (`scr_cut_caption`, 16 frases com fade, uma por trecho da tabela acima).
+## Narracao (ingles)
+
+Ha 14 falas narradas (`sounds/narr_01` a `narr_14`, mp3), tocadas no quadro indicado em `scr_cut_lines` (`scr_presentation.gml`) e legendadas na barra inferior. A voz e a neural `en-US-ChristopherNeural` (edge-tts, velocidade normal), gerada por `tools/generate_narration_neural.py`; o script le o texto de `scr_cut_lines`, regrava os mp3, atualiza os `.yy` e a duracao em quadros. Ele envia o texto da narracao ao servico online de TTS da Microsoft e precisa de `pip install edge-tts mutagen`. `tools/generate_narration.ps1` e a alternativa offline (voz Zira, robotica). Para trocar por uma gravacao propria, substitua o arquivo de cada `narr_NN` e ajuste `duration`/`soundFile` no `.yy` e a duracao em quadros em `scr_cut_lines`. As legendas estao desligadas (`global.cut_captions=false` em `objects/obj_game/Create_0.gml`); mude para `true` para mostra-las. E/Enter interrompe a voz ao saltar a cutscene. O modo QA roda sem audio.
 
 ## Efeitos (2D, sem video externo)
 

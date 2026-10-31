@@ -1,12 +1,12 @@
 ﻿{
-    "section_one_removed":  2.0,
     "section_zero_removed":  1.0,
-    "fixed_platforms":  5.0,
     "passed":  true,
+    "fixed_platforms":  5.0,
     "later_section_preserved":  1.0,
     "both_builders_removed":  true,
     "inventories_preserved":  true,
     "checkpoint_return":  true,
-    "data_sha256":  "FCC765C7043BCC0F08F7C2E4D89F6EBA4042D8E13951B95A0002194D9275F57A",
-    "source_commit":  "5d45a2e9d4b4cc61303b4a8e7f7bfda5164072ab"
+    "section_one_removed":  2.0,
+    "data_sha256":  "CFAD7BEC12EA9BEF2B6D3723AD7859FFDC33B3062BB06240E00449CEC377BB01",
+    "source_commit":  "a07c35b4a09fbe529858bfc26bf04632a2db6635"
 }

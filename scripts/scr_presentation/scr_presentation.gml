@@ -417,34 +417,54 @@ function scr_cut_post(_t) {
     }
 }
 
-// English narration, shown in the lower letterbox bar: [from, to, text] in cutscene frames.
-function scr_cut_caption(_t) {
-    static _caps=[
-        [40,205,"A god came to see what was left of the world."],
-        [100,212,"With a snap of his fingers, he showed them what it could be."],
-        [216,290,"But the vision faded. His hands were empty."],
-        [292,410,"He pointed at them. The rebuilding was theirs."],
-        [440,610,"So they cleared the rubble, one stone at a time."],
-        [620,775,"And the seedling was finally free to grow."],
-        [830,1060,"The game ended. The screen went dark."],
-        [1120,1330,"They looked at one another."],
-        [1340,1560,"And they understood: nobody was coming to save them."],
-        [1570,1790,"If the world was going to change, it would have to be them."],
-        [1880,2300,"One began by cleaning the street in front of home."],
-        [2400,2820,"One carried light to a neighbour who was alone."],
-        [2920,3340,"One planted seeds where there was only bare earth."],
-        [3440,3860,"One watered the flowers no one else remembered."],
-        [3960,4210,"No one came to save the world. They did."],
-        [4240,4490,"Small acts, one person at a time. Together."]
+// English narration: [start frame, voice length in frames, sound, caption]. Starts follow the beats of the cutscene.
+function scr_cut_lines() {
+    static _lines=[
+        [15,170,narr_01,"A god came to see the ruins."],
+        [210,306,narr_02,"He could show them a better world. But he would not build it for them."],
+        [525,205,narr_03,"So they began, one stone at a time."],
+        [745,191,narr_04,"And the seedling was finally free to grow."],
+        [945,257,narr_05,"The game was over. The screen went dark."],
+        [1210,133,narr_06,"They looked at one another."],
+        [1350,229,narr_07,"And they understood: nobody was coming to save them."],
+        [1590,237,narr_08,"If the world was going to change, it would have to be them."],
+        [1880,214,narr_09,"One began by cleaning the street in front of home."],
+        [2400,202,narr_10,"One carried light to a neighbour who was alone."],
+        [2920,212,narr_11,"One planted seeds where there was only bare earth."],
+        [3440,212,narr_12,"One watered the flowers no one else remembered."],
+        [3960,251,narr_13,"No one came to save the world. They did."],
+        [4240,291,narr_14,"Small acts, one person at a time. Together."]
     ];
-    for(var _i=0;_i<array_length(_caps);_i++) {
-        var _c=_caps[_i];
-        if(_t<_c[0] || _t>_c[1])continue;
-        var _a=scr_cut_ease((_t-_c[0])/25)*scr_cut_ease((_c[1]-_t)/25);
+    return _lines;
+}
+
+// Plays each narration line on its start frame (called once per step during the ending).
+function scr_cut_voice(_t) {
+    if(!global.audio_enabled)return;
+    var _lines=scr_cut_lines();
+    for(var _i=0;_i<array_length(_lines);_i++)
+        if(_lines[_i][0]==_t)audio_play_sound(_lines[_i][2],10,false);
+}
+
+function scr_cut_voice_stop() {
+    if(!global.audio_enabled)return;
+    var _lines=scr_cut_lines();
+    for(var _i=0;_i<array_length(_lines);_i++)audio_stop_sound(_lines[_i][2]);
+}
+
+// Captions mirror the voice in the lower letterbox bar; set global.cut_captions=false (obj_game Create) to hide them.
+function scr_cut_caption(_t) {
+    if(variable_global_exists("cut_captions") && !global.cut_captions)return;
+    var _lines=scr_cut_lines();
+    for(var _i=0;_i<array_length(_lines);_i++) {
+        var _c=_lines[_i];
+        var _from=_c[0];var _to=_c[0]+_c[1]+25;
+        if(_t<_from || _t>_to)continue;
+        var _a=scr_cut_ease((_t-_from)/25)*scr_cut_ease((_to-_t)/25);
         draw_set_halign(fa_center);draw_set_valign(fa_middle);
         draw_set_alpha(_a);
-        draw_set_color(make_color_rgb(6,8,13));draw_text_transformed(684,744,_c[2],1.6,1.6,0);
-        draw_set_color(make_color_rgb(245,232,201));draw_text_transformed(683,743,_c[2],1.6,1.6,0);
+        draw_set_color(make_color_rgb(6,8,13));draw_text_transformed(684,744,_c[3],1.6,1.6,0);
+        draw_set_color(make_color_rgb(245,232,201));draw_text_transformed(683,743,_c[3],1.6,1.6,0);
         draw_set_alpha(1);draw_set_halign(fa_left);draw_set_valign(fa_top);
     }
 }
@@ -494,10 +514,6 @@ function scr_draw_ending(_t) {
         var _ts=lerp(3.6,4,_c);
         draw_text_transformed(683,360,"TOGETHER",_ts,_ts,0);
         if(_t>=4630)scr_cut_plant(683,486,6+30*scr_cut_ease((_t-4640)/100),0.5*scr_cut_ease((_t-4640)/100));
-        if(_t>=4780) {
-            draw_set_alpha(0.55+0.3*sin(_t/18));draw_set_color(make_color_rgb(200,188,160));
-            draw_text(683,600,"W / Up to play again");
-        }
         draw_set_alpha(1);
         draw_set_halign(fa_left);draw_set_valign(fa_top);
     }

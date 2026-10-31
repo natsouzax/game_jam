@@ -64,7 +64,7 @@ Nao houve rodada com duas pessoas nem teste de ghosting, conforto, clareza narra
 '''
 report=report.replace('Entrada do titulo, introducao,','Menu de modo/personagem, tres cenas da abertura,')
 report=report.replace('A API de controle da interface ficou indisponivel (native pipe), portanto nao foi feito teste final com teclas fisicas.','As entradas foram automaticas; nao houve teste final com teclas fisicas nesta revisao.')
-report=report.replace('Apenas uma chamada draw_text existe no jogo, com o titulo TOGETHER.','As duas chamadas draw_text desenham o mesmo titulo TOGETHER (sombra e frente); nenhum outro texto e exibido.')
+report=report.replace('Apenas uma chamada draw_text existe no jogo, com o titulo TOGETHER.','O unico texto exibido e o titulo TOGETHER; as legendas opcionais da narracao ficam desligadas (global.cut_captions=false).')
 report=report.replace('ambos confirmam com W/Cima,','selecione duas silhuetas com A/D ou setas e confirme com E/Enter,')
 report+=f'''
 ## Revisao visual, menu e solo

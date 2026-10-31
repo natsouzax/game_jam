@@ -19,19 +19,19 @@ function scr_enemy_spawn(_level) {
     switch(_e.kind) {
         case 0:
             _e.x=180;_e.home_x=180;_e.home_y=1374;
-            _e.walk_dir=1;_e.patrol_speed=1.15;_e.hit_radius=27;
+            _e.walk_dir=1;_e.patrol_speed=1.4;_e.hit_radius=28;
             break;
         case 1:
-            _e.patrol_speed=0.040;_e.orbit_reach=170;_e.bob_amount=26;_e.hit_radius=30;
+            _e.home_x=room_width/2;_e.patrol_speed=0.050;_e.orbit_reach=570;_e.bob_amount=30;_e.hit_radius=31;
             break;
         case 2:
-            _e.patrol_speed=0.048;_e.orbit_reach=205;_e.bob_amount=14;_e.hit_radius=33;
+            _e.home_x=room_width/2;_e.patrol_speed=0.056;_e.orbit_reach=560;_e.bob_amount=16;_e.hit_radius=34;
             break;
         case 3:
-            _e.patrol_speed=0.013;_e.fall_range=150;_e.hit_radius=28;
+            _e.home_y=705;_e.patrol_speed=0.014;_e.fall_range=100;_e.hit_radius=28;
             break;
         case 4:
-            _e.patrol_speed=0.023;_e.fall_range=140;_e.hit_radius=34;
+            _e.home_y=510;_e.patrol_speed=0.020;_e.fall_range=90;_e.hit_radius=32;
             break;
     }
     return _e;

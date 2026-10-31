@@ -47,7 +47,8 @@ if(global.game_state=="title") {
     spawn_timer--;
     if(instance_number(obj_material)==0 && spawn_timer<=0) {
         var _receiver=(global.player_count==1?(global.solo_character==0?_p1:_p2):(spawn_side mod 2==0?_p1:_p2));spawn_side++;
-        var _drop_x=clamp(_receiver.x+irandom_range(-14,14),64,room_width-64);
+        // Materials only rain over the tower, whatever side the players climb.
+        var _drop_x=clamp(672+irandom_range(-140,140),512,832);
         var _drop_y=max(20,_receiver.y-180);
         for(var _si=0;_si<instance_number(obj_world_solid);_si++) {
             var _roof=instance_find(obj_world_solid,_si);
@@ -70,9 +71,10 @@ if(global.game_state=="title") {
     if(_at_top) {global.game_state="ending";ending_timer=0;global.game_timer=0;audio_stop_all();}
 } else if(global.game_state=="ending") {
     ending_timer++;
+    scr_cut_voice(ending_timer);
     var _skip_cutscene=(global.qa_skip_ending && ending_timer==100) ||
         (!global.qa && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)));
-    if(ending_timer>30 && ending_timer<4600 && _skip_cutscene)ending_timer=4600;
+    if(ending_timer>30 && ending_timer<4600 && _skip_cutscene){ending_timer=4600;scr_cut_voice_stop();}
     if(ending_timer>=4780 && (global.qa || keyboard_check_pressed(ord("W")) || keyboard_check_pressed(vk_up))) {
         if(global.qa) {global.qa_result=scr_qa_summary(_p1,_p2);global.qa_restart_pending=true;}
         if(variable_global_exists("cutscene_surface") && surface_exists(global.cutscene_surface))surface_free(global.cutscene_surface);

@@ -32,3 +32,4 @@ for(var _i=1;_i<=5;_i++) {
 for(var _e=1;_e<=5;_e++) scr_enemy_spawn(_e);
 
 window_set_caption("TOGETHER");
+global.cut_captions=false;

@@ -14,12 +14,16 @@ switch(kind) {
     case 3:
         phase+=patrol_speed;
         var _star_fall=phase mod 1;
+        if(_star_fall<fall_t) home_x=irandom_range(120,room_width-120);
+        fall_t=_star_fall;
         x=home_x+sin(phase*6)*34;
         y=home_y-fall_range/2+_star_fall*fall_range;
         break;
     case 4:
         phase+=patrol_speed;
         var _metal_fall=phase mod 1;
+        if(_metal_fall<fall_t) home_x=irandom_range(120,room_width-120);
+        fall_t=_metal_fall;
         x=home_x+sin(phase*3)*18;
         y=home_y-fall_range/2+_metal_fall*fall_range;
         break;
