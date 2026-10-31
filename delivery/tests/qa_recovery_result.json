@@ -1,0 +1,21 @@
+﻿{
+    "p2_recoveries":  5.0,
+    "p1_shared_uses":  5.0,
+    "p2_shared_uses":  5.0,
+    "restarted":  true,
+    "passed":  true,
+    "ending":  true,
+    "enemy_hits":  1.0,
+    "fall_hits":  6.0,
+    "frames":  1689.0,
+    "p1_collected":  13.0,
+    "p2_collected":  6.0,
+    "p1_built":  9.0,
+    "p2_built":  6.0,
+    "simultaneous_frames":  364.0,
+    "p1_checkpoint":  5.0,
+    "p2_checkpoint":  5.0,
+    "p1_recoveries":  6.0,
+    "data_sha256":  "AD570E045E7F3BAE4A101FA625A8418C5633AED845049F05B1F9F40140971FAA",
+    "source_commit":  "9cde5a3ef17403ba5d4f9a678dc935df9208752f"
+}

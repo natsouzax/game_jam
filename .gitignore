@@ -64,3 +64,4 @@ Build
 tools/node_modules/
 delivery/windows/
 delivery/*.zip
+tools/tmp/
