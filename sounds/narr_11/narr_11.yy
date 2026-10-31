@@ -1,0 +1,26 @@
+{
+  "$GMSound":"v2",
+  "%Name":"narr_11",
+  "audioGroupId":{
+    "name":"audiogroup_default",
+    "path":"audiogroups/audiogroup_default",
+  },
+  "bitDepth":1,
+  "channelFormat":0,
+  "compression":0,
+  "compressionQuality":4,
+  "conversionMode":0,
+  "duration":3.528,
+  "exportDir":"",
+  "name":"narr_11",
+  "parent":{
+    "name":"audio",
+    "path":"folders/audio.yy",
+  },
+  "preload":true,
+  "resourceType":"GMSound",
+  "resourceVersion":"2.0",
+  "sampleRate":24000,
+  "soundFile":"narr_11.mp3",
+  "volume":1.0,
+}

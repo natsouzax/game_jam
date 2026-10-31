@@ -173,6 +173,15 @@ class Mix:
                 frames += struct.pack("<h", int(clamped * 32767))
             wav.writeframes(bytes(frames))
 
+    def loop_edges(self, fade_in=0.008, fade_out=0.03):
+        """Silence the loop seam so GameMaker restarts the track without a click."""
+        n_in = min(self.n, int(fade_in * SR))
+        n_out = min(self.n, int(fade_out * SR))
+        for i in range(n_in):
+            self.buf[i] *= i / n_in
+        for i in range(n_out):
+            self.buf[self.n - 1 - i] *= i / n_out
+
 
 def note(mix, beat, start_beat, beats, midi_note, **kwargs):
     sig = tone(midi(midi_note), beats * beat, **kwargs)
@@ -532,6 +541,8 @@ def main():
         folder = os.path.join(SOUND_DIR, name)
         os.makedirs(folder, exist_ok=True)
         mix = BUILDERS[name]()
+        if name.startswith("mus_"):
+            mix.loop_edges()
         wav_path = os.path.join(folder, name + ".wav")
         mix.write(wav_path)
         write_sound_resource(name, mix.n / SR)

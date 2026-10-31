@@ -11,7 +11,7 @@ $startedAt=Get-Date
 $mode=if($SectionReset){'--qa-section-reset'}elseif($Solo -gt 0){"--qa-solo${Solo}"}elseif($Recovery){'--qa-recovery'}else{'--qa'}
 $argsLine='-game "'+(Join-Path $folder 'data.win')+'" '+$mode
 $process=Start-Process -FilePath (Join-Path $folder 'JUNTOS.exe') -ArgumentList $argsLine -WorkingDirectory $folder -WindowStyle Hidden -PassThru
-if(!$process.WaitForExit(60000)){Stop-Process -Id $process.Id;throw 'QA timed out'}
+if(!$process.WaitForExit(180000)){Stop-Process -Id $process.Id;throw 'QA timed out'}
 if(!(Test-Path -LiteralPath $resultPath)){throw 'QA did not write a report'}
 New-Item -ItemType Directory -Force $testFolder | Out-Null
 Copy-Item -LiteralPath $resultPath -Destination (Join-Path $testFolder $filename) -Force

@@ -4,13 +4,19 @@ function scr_audio_init() {
     if (variable_global_exists("music_track")) _keep_track = global.music_track;
     if (variable_global_exists("music_handle")) _keep_handle = global.music_handle;
     global.audio_enabled = !global.qa;
+    if (!variable_global_exists("audio_volume")) {
+        global.audio_volume=0.7;global.audio_music_on=true;global.audio_game_muted=false;
+    }
     global.intro_scene = 0;
     if (!global.audio_enabled) {
         global.music_track = -1;
         global.music_handle = -1;
         return;
     }
-    audio_master_gain(0.7);
+    if (!variable_global_exists("audio_volume")) {
+        global.audio_volume=0.7;global.audio_music_on=true;global.audio_game_muted=false;
+    }
+    scr_audio_apply();
     // Keep the current track across room changes so gameplay music is not stacked.
     global.music_track = _keep_track;
     global.music_handle = _keep_handle;
@@ -41,7 +47,7 @@ function scr_music(_track) {
     scr_music_stop();
     global.music_track = _track;
     global.music_handle = -1;
-    if (_track != -1) global.music_handle = audio_play_sound(_track, 0, true);
+    scr_audio_refresh_music();
 }
 
 // One track per screen. Switching always stops the previous music first.
@@ -70,4 +76,42 @@ function scr_intro_audio() {
         scr_sfx(sfx_intro_whoosh);
     }
     if (global.game_timer == 270) scr_sfx(sfx_intro_artifact, 0, 0.9);
+}
+
+function scr_audio_apply() {
+    if (!global.audio_enabled) return;
+    audio_master_gain(global.audio_game_muted ? 0 : global.audio_volume);
+}
+
+
+function scr_audio_refresh_music() {
+    if (!global.audio_enabled) return;
+    var _play = global.audio_music_on && global.music_track != -1;
+    if (_play && global.music_handle == -1) {
+        global.music_handle = audio_play_sound(global.music_track, 0, true);
+    } else if (!_play && global.music_handle != -1) {
+        audio_stop_sound(global.music_handle);
+        global.music_handle = -1;
+    }
+}
+
+
+function scr_audio_music_toggle() {
+    if (!global.audio_enabled) return;
+    global.audio_music_on = !global.audio_music_on;
+    scr_audio_refresh_music();
+}
+
+
+function scr_audio_volume(_delta) {
+    if (!global.audio_enabled) return;
+    global.audio_volume = clamp(global.audio_volume + _delta, 0, 1);
+    scr_audio_apply();
+}
+
+
+function scr_audio_mute_toggle() {
+    if (!global.audio_enabled) return;
+    global.audio_game_muted = !global.audio_game_muted;
+    scr_audio_apply();
 }

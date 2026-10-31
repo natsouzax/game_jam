@@ -118,3 +118,65 @@ function scr_qa_section_reset_test(_p1,_p2) {
         fixed_platforms:_fixed,later_section_preserved:instance_exists(_later),both_builders_removed:_section_one_ok,
         inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==_floor-192 && _p2.y==_floor};
 }
+
+// Regression fixture for split floor, independent jump/dash and death menu retry.
+function scr_qa_regression(_p1,_p2) {
+    var _g=instance_find(obj_game,0);
+    if(_g.qa_regression_stage==0 && !variable_global_exists("regression_report")) {
+        global.game_state="play";global.player_count=1;global.solo_character=0;
+        _p2.active_player=false;
+        var _floor=scr_floor_y();
+        var _hole=!scr_world_aabb_solid(650,_floor,710,_floor+1);
+        var _bank=scr_world_aabb_solid(180,_floor,220,_floor+1);
+        with(_p1) {
+            x=200;y=scr_floor_y();vy=0;
+            scr_player_tick(0,true,false,false);
+        }
+        var _normal=abs(_p1.vy-(-11+0.48))<0.01 && _p1.charge==0 && _p1._hthrust==0;
+        with(_p1) {
+            x=200;y=scr_floor_y();vy=0;
+            repeat(150)scr_player_tick(1,false,false,true);
+        }
+        var _held=_p1.charge==DASH_CHARGE_FRAMES && _p1.x==200;
+        var _dash_enemy=instance_create_layer(226,scr_floor_y()-30,"Instances_1",obj_enemy);
+        with(_p1)scr_player_tick(0,false,false,false);
+        var _dash=_p1.x==200+DASH_THRUST && _p1._hthrust>0 && _p1.vy<0;
+        var _ability_kill=!instance_exists(_dash_enemy);
+        global.player_count=2;_p2.active_player=true;
+        var _magnet_mat=instance_create_layer(240,scr_floor_y()-30,"Instances_1",obj_material);
+        with(_p2) {
+            x=200;y=scr_floor_y();vy=0;material_count=0;_hthrust=0;
+            repeat(DASH_CHARGE_FRAMES)scr_player_tick(1,false,false,true);
+            scr_player_tick(0,false,false,false);
+        }
+        var _ability_magnet=_p2.material_count==1 && !instance_exists(_magnet_mat);
+        _p2.active_player=false;global.player_count=1;
+        global.regression_report={hole:_hole,bank:_bank,normal_jump:_normal,charge:_held,dash:_dash,
+            ability_kill:_ability_kill,ability_magnet:_ability_magnet};
+        with(_p1){x=270;y=scr_floor_y();vy=0;_hthrust=0;}
+        _g.qa_regression_stage=1;
+    } else if(_g.qa_regression_stage==1) {
+        _g.qa_regression_hold++;
+        if(_g.qa_regression_hold<12)return;
+        _g.qa_regression_hold=0;
+        _p1.player_lives=1;
+        with(_p1)scr_player_die();
+        global.regression_report.solo_menu=global.game_state=="gameover";
+        _g.qa_regression_stage=2;
+    } else if(_g.qa_regression_stage==2) {
+        _g.qa_regression_hold++;
+        if(_g.qa_regression_hold<8)return;
+        _g.qa_regression_stage=3;scr_gameover_select(0);
+    } else {
+        global.regression_report.retry=global.game_state=="play" && _p1.active_player && !_p2.active_player && _p1.player_lives==3;
+        global.player_count=2;_p2.active_player=true;_p1.player_lives=1;
+        with(_p1)scr_player_die();
+        global.regression_report.coop_menu=global.game_state=="gameover";
+        scr_gameover_select(1);
+        global.regression_report.return_title=global.game_state=="title";
+        var _r=global.regression_report;
+        _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.ability_kill && _r.ability_magnet && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
+        var _file=file_text_open_write("qa_regression_result.json");
+        file_text_write_string(_file,json_stringify(_r));file_text_close(_file);game_end();
+    }
+}

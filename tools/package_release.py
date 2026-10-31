@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from zipfile import ZipFile,ZIP_DEFLATED
 import hashlib,json,subprocess,xml.etree.ElementTree as E
 R=Path(__file__).resolve().parent.parent
@@ -18,7 +18,7 @@ for report in [normal,recovery]:
 assert recovery['enemy_hits']>0 and recovery['fall_hits']>0
 assert normal['section_scope_ok'] and recovery['section_scope_ok']
 commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R).decode().strip()
-report=f'''# Verificacao do MVP JUNTOS
+report=f'''# Verificacao do MVP TOGETHER
 
 Fonte de jogo: {normal['source_commit']}. Base preservada: 938089d. Runtime GameMaker 2026.0.0.23, Windows x64/DirectX11. Executavel testado e o da pasta delivery/windows; o engine exportado existente tem hash identico ao Runner instalado. O arquivo data.win testado tem SHA256 {sha(D/'windows/data.win')}.
 
@@ -56,7 +56,7 @@ A simulacao e acelerada; numero de quadros nao e tempo de conclusao de pessoas n
 
 A apresentacao oficial pede build Windows ou WebGL e LDMT preenchida. Foram mantidas as copias Plan e Final, com 1.512 formulas do original e IDs fixos preservados. Os pesos sao propostas de planejamento justificadas; nao representam dificuldade empirica. O grafico e seus caches foram atualizados e os XMLs validados. A planilha nao foi testada no Excel instalado; abrir/recalcular no Excel e uma verificacao recomendada de compatibilidade, nao uma alegacao ja realizada.
 
-Apenas uma chamada draw_text existe no jogo, com o titulo JUNTOS. Multiplayer e chegada conjunta sao demonstrados pelos testes. Seis avatares simbolicos representam a equipe. Sem audio e sem alegacao de paleta de cinco cores.
+Apenas uma chamada draw_text existe no jogo, com o titulo TOGETHER. Multiplayer e chegada conjunta sao demonstrados pelos testes. Seis avatares simbolicos representam a equipe. Sem audio e sem alegacao de paleta de cinco cores.
 
 ## Limites e teste humano recomendado
 
@@ -64,7 +64,7 @@ Nao houve rodada com duas pessoas nem teste de ghosting, conforto, clareza narra
 '''
 report=report.replace('Entrada do titulo, introducao,','Menu de modo/personagem, tres cenas da abertura,')
 report=report.replace('A API de controle da interface ficou indisponivel (native pipe), portanto nao foi feito teste final com teclas fisicas.','As entradas foram automaticas; nao houve teste final com teclas fisicas nesta revisao.')
-report=report.replace('Apenas uma chamada draw_text existe no jogo, com o titulo JUNTOS.','As duas chamadas draw_text desenham o mesmo titulo JUNTOS (sombra e frente); nenhum outro texto e exibido.')
+report=report.replace('Apenas uma chamada draw_text existe no jogo, com o titulo TOGETHER.','O unico texto exibido e o titulo TOGETHER; as legendas opcionais da narracao ficam desligadas (global.cut_captions=false).')
 report=report.replace('ambos confirmam com W/Cima,','selecione duas silhuetas com A/D ou setas e confirme com E/Enter,')
 report+=f'''
 ## Revisao visual, menu e solo
@@ -86,7 +86,7 @@ Solo usa A/D/W/E com qualquer personagem. Camera, material, colisao com inimigo,
 '''
 (R/'docs/TEST_REPORT.md').write_text(report,encoding='utf-8')
 (D/'TEST_REPORT.md').write_text(report,encoding='utf-8')
-(D/'SUBMISSION.txt').write_text('''JUNTOS
+(D/'SUBMISSION.txt').write_text('''TOGETHER
 Tema: A better world
 Dois sobreviventes recebem um chamado para subir. Os recursos pertencem a cada jogador, mas a torre e construida em conjunto. Ao alcancar o topo, a criacao ganha vida; o final revela seis criadores jogando, levando a ideia de construir juntos para fora da tela.
 Windows x64. Solo com escolha do personagem ou dois jogadores no mesmo teclado. Menu A/D ou setas, E/Enter confirma, S/Baixo volta. Solo qualquer personagem A/D/W/E. Coop P1 A/D/W/E; P2 Esquerda/Direita/Cima/Enter. Coleta automatica; todos os participantes ativos precisam chegar ao topo. Abertura visual sem palavras.
@@ -121,7 +121,7 @@ shutil.copyfile(R/'docs/ART_AND_SOURCES.md',D/'ART_AND_SOURCES.md')
 shutil.copyfile(D/'README.md',D/'windows/README.md')
 payload=[]
 for p in (D/'windows').iterdir():
- if p.is_file():payload.append((p,'windows/'+p.name))
+ if p.is_file() and p.name not in ['JUNTOS.exe','Jogar.cmd']:payload.append((p,'windows/'+p.name))
 for n in ['LDMT_JUNTOS_Plan.xlsx','LDMT_JUNTOS_Final.xlsx','LDMT_VALIDATION.json']:payload.append((D/'documents'/n,'documents/'+n))
 for n in ['README.md','TEST_REPORT.md','ART_AND_SOURCES.md','SUBMISSION.txt']:payload.append((D/n,n))
 for name,label in [('qa_menu.png','menu.png'),('qa_character.png','selection.png'),('qa_intro_0.png','intro_ruins.png'),('qa_intro_1.png','intro_artifact.png'),('qa_intro_2.png','intro_mission.png'),('qa_coop_start.png','coop.png'),('qa_gameplay.png','gameplay.png'),('qa_solo2_start.png','solo.png'),('qa_final.png','final.png')]:
@@ -131,7 +131,7 @@ for name in ['qa_result.json','qa_recovery_result.json','qa_section_reset_result
 manifest={'game_commit':normal['source_commit'],'branch':'jam/mvp-complete','runtime':'2026.0.0.23','normal_passed':normal['passed'],'recovery_passed':recovery['passed'],'section_reset_passed':section['passed'],'solo1_passed':solos[0]['passed'],'solo2_passed':solos[1]['passed'],'files':{n:sha(p) for p,n in payload}}
 (D/'MANIFEST.json').write_text(json.dumps(manifest,indent=2))
 payload.append((D/'MANIFEST.json','MANIFEST.json'))
-out=D/'JUNTOS_Entrega.zip'
+out=D/'TOGETHER_Release.zip'
 with ZipFile(out,'w',ZIP_DEFLATED) as z:
  for p,n in payload:z.write(p,n)
 with ZipFile(out) as z:
