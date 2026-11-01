@@ -20,6 +20,7 @@ if (!variable_global_exists("gp_prev_l")) {
     global.gp_prev_u=false; global.gp_prev_d=false;
     global.gp_prev_c=false; global.gp_prev_b=false;
     global.gp_prev_confirm_any=false;
+    global.gp_prev_pu=false; global.gp_prev_pd=false; global.gp_prev_pc=false;
     global.gp_btn_last=-1;
 }
 if (!variable_global_exists("dbg_mv")) {

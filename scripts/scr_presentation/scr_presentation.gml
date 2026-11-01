@@ -543,6 +543,11 @@ function scr_save_game(_p1,_p2) {
     file_text_write_string(_sf,json_stringify(_save));
     file_text_close(_sf);
 }
+function scr_clear_save() {
+    if (file_exists("save.json")) file_delete("save.json");
+    if (file_exists("settings.json")) { /* keep settings */ }
+    scr_sfx(sfx_ui_back);
+}
 function scr_load_game() {
     if (!file_exists("save.json")) { scr_sfx(sfx_ui_back); return; }
     var _f=file_text_open_read("save.json");
@@ -631,7 +636,7 @@ function scr_menu_input(_direction,_confirm,_back,_vertical=0,_escape=false) {
     // Note: _vertical is +1 when pressing W/Up and -1 when pressing S/Down.
     if(global.menu_stage==0) {
         if(_vertical!=0) {
-            var _next_title=clamp(global.title_choice-_vertical,0,2);
+            var _next_title=clamp(global.title_choice-_vertical,0,3);
             if(_next_title!=global.title_choice) {
                 global.title_choice=_next_title;
                 scr_sfx(sfx_ui_move);
@@ -641,10 +646,8 @@ function scr_menu_input(_direction,_confirm,_back,_vertical=0,_escape=false) {
             scr_sfx(sfx_ui_confirm);
             if(global.title_choice==0) { global.menu_stage=1; global.menu_mode=1; }
             else if(global.title_choice==1) { scr_load_game(); }
-            else { global.menu_stage=3; global.settings_index=0; }
-        }
-        if(_back) {
-            global.menu_stage=3; global.settings_index=0; scr_sfx(sfx_ui_confirm);
+            else if(global.title_choice==2) { global.menu_stage=3; global.settings_index=0; }
+            else { scr_clear_save(); }
         }
         return;
     }
@@ -672,7 +675,7 @@ function scr_menu_input(_direction,_confirm,_back,_vertical=0,_escape=false) {
                 scr_sfx(sfx_ui_confirm);
             }
         }
-        if(_confirm || _escape || _back) { global.menu_stage=0; scr_sfx(sfx_ui_back); scr_settings_save(); }
+        if(_confirm || _escape) { global.menu_stage=0; scr_sfx(sfx_ui_back); scr_settings_save(); }
         return;
     }
     // Stage 1: Mode selection (0 = 1 Jogador on left, 1 = 2 Jogadores on right).
@@ -943,9 +946,9 @@ function scr_draw_title_menu() {
         draw_set_color(make_color_rgb(155,173,166));
         draw_text_transformed(683,270,"MENU PRINCIPAL",1.25,1.25,0);
         // Title screen with three buttons: Iniciar Jogo, Carregar Jogo, Ajustes.
-        var _labels=["INICIAR JOGO","CARREGAR JOGO","AJUSTES"];
-        for(var _c=0;_c<3;_c++) {
-            var _cx=683; var _cy=355+_c*92; var _selected=(global.title_choice==_c);
+        var _labels=["INICIAR JOGO","CARREGAR JOGO","AJUSTES","LIMPAR SAVE"];
+        for(var _c=0;_c<4;_c++) {
+            var _cx=683; var _cy=340+_c*80; var _selected=(global.title_choice==_c);
             if(_selected)scr_cut_glow(_cx, _cy, 120, make_color_rgb(232,190,106), 0.16);
             scr_ui_panel(_cx-195, _cy-36, _cx+195, _cy+36, _selected);
             draw_set_halign(fa_center);draw_set_valign(fa_middle);
@@ -1075,6 +1078,8 @@ function scr_begin_gameover() {
     global.restart_game = false;
     global.gameover_choice = 0;
     global.gameover_timer = 0;
+    global.last_menu_mode = global.menu_mode;
+    global.last_solo_character = global.solo_character;
     with (obj_player_p1) { active_player = false; dead = true; }
     with (obj_player_p2) { active_player = false; dead = true; }
     // Cut every stacked death sting and the gameplay loop, then one cue plus the screen track.
@@ -1128,11 +1133,21 @@ function scr_gameover_input(_timer) {
 
 function scr_gameover_select(_choice) {
     if (_choice==0) {
-        // Retry preserves the surviving tower (up to 10 random blocks were already removed on death).
+        // Retry: restart the selected mode cleanly, without carrying over the previous run.
+        global.menu_mode = (global.player_count==1 ? 0 : 1);
+        global.solo_character = (global.player_count==1 ? (variable_global_exists("last_solo_character") ? global.last_solo_character : 0) : 0);
+        global.player_count = (global.menu_mode==0 ? 1 : 2);
         global.game_state="play";global.game_timer=0;global.retry_pending=false;
         global.death_window_timer=0;
+        global.auto_save_timer=3600;
+        global.last_save_altitude=0;
         scr_audio_silence();
         scr_screen_music("play");
+        // Clear all constructed blocks for a fresh run.
+        for(var _bi=instance_number(obj_build_block)-1;_bi>=0;_bi--) {
+            var _b=instance_find(obj_build_block,_bi);
+            if(_b!=noone && !_b.is_checkpoint) instance_destroy(_b);
+        }
         var _game=instance_find(obj_game,0);
         if(_game!=noone) {
             _game.camera_y=room_height-768;
@@ -1147,13 +1162,33 @@ function scr_gameover_select(_choice) {
             _p.active_player=(global.player_count==2 || global.solo_character==_i);
             _p.respawn_x=(_i==0?270:1096);
             _p.respawn_y=scr_floor_y();
+            _p.material_count=0;
+            _p.built_total=0;
+            _p.collected_total=0;
+            _p.fall_hits=0;
+            _p.enemy_hits=0;
+            _p.recoveries=0;
+            _p.reset_blocks_total=0;
+            _p.checkpoint_level=0;
+            _p.x=_p.respawn_x;
+            _p.y=_p.respawn_y;
+            _p.vy=0;
+            _p.grounded=true;
+            _p.invulnerable=0;
+            _p.charge=0;
+            _p._hthrust=0;
+            _p._jump_was_held=false;
+            _p._charge_dir=0;
+            _p.jump_held=false;
+            _p.qa_target=noone;
+            _p.last_support=noone;
+            _p.last_move=0;
+            _p.facing=(_i==0?1:-1);
             if(_p.active_player) {
-                with(_p) {
-                    scr_player_recover();
-                    invulnerable=120;
-                }
+                with(_p) { invulnerable=120; }
             }
         }
+        window_set_cursor(cr_default);
     } else scr_return_to_title();
 }
 
@@ -1329,7 +1364,32 @@ function scr_pause_select(_choice) {
         global.pause_guard=3;
         window_set_cursor(cr_default);
         scr_sfx(sfx_ui_confirm);
-        room_restart();
+        // Reset players for the selected mode.
+        for(var _i=0;_i<2;_i++) {
+            var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
+            if(_p==noone)continue;
+            _p.dead=false;
+            _p.player_lives=3;
+            _p.active_player=(global.player_count==2 || global.solo_character==_i);
+            _p.respawn_x=(_i==0?270:1096);
+            _p.respawn_y=scr_floor_y();
+            _p.x=_p.respawn_x;_p.y=_p.respawn_y;
+            _p.vy=0;_p.grounded=true;
+            _p.material_count=0;_p.built_total=0;_p.collected_total=0;
+            _p.fall_hits=0;_p.enemy_hits=0;_p.recoveries=0;
+            _p.reset_blocks_total=0;_p.checkpoint_level=0;
+            _p.invulnerable=0;_p.charge=0;_p._hthrust=0;
+            _p._jump_was_held=false;_p._charge_dir=0;_p.jump_held=false;
+            _p.qa_target=noone;_p.last_support=noone;_p.last_move=0;
+            _p.facing=(_i==0?1:-1);
+        }
+        // Clear blocks.
+        for(var _bi=instance_number(obj_build_block)-1;_bi>=0;_bi--) {
+            var _b=instance_find(obj_build_block,_bi);
+            if(_b!=noone && !_b.is_checkpoint) instance_destroy(_b);
+        }
+        var _game=instance_find(obj_game,0);
+        if(_game!=noone) { _game.camera_y=room_height-768; camera_set_view_pos(_game.cam,0,_game.camera_y); }
         return;
     }
     window_set_cursor(cr_default);
@@ -1385,17 +1445,34 @@ function scr_pause_input() {
     }
     if(_hover!=-1)window_set_cursor(cr_handpoint);
     else window_set_cursor(cr_default);
-    if(_hover!=-1 && _hover!=global.pause_index) {
-        global.pause_index=_hover;
-        scr_sfx(sfx_ui_move);
+    // Gamepad navigation for pause menu (manual edge detection).
+    var _gp=scr_gamepad_for_player(0);
+    var _gp_nav=0;
+    if(_gp>=0) {
+        var _gpy=gamepad_axis_value(_gp,gp_axislv);
+        var _gp_up=gamepad_button_check(_gp,gp_padu)||(_gpy<-0.6);
+        var _gp_down=gamepad_button_check(_gp,gp_padd)||(_gpy>0.6);
+        if(_gp_up && !global.gp_prev_pu) _gp_nav=-1;
+        if(_gp_down && !global.gp_prev_pd) _gp_nav=1;
+        global.gp_prev_pu=_gp_up; global.gp_prev_pd=_gp_down;
     }
     var _nav=(keyboard_check_pressed(ord("S"))||keyboard_check_pressed(vk_down))-(keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up));
+    if(_gp_nav!=0) _nav=_gp_nav;
+    // Do not let mouse hover override keyboard/gamepad selection (prevents the
+    // selector from snapping back to the last option while navigating).
     if(_nav!=0) {
         global.pause_index=(global.pause_index+_nav+4) mod 4;
         scr_sfx(sfx_ui_move);
     }
     var _click=mouse_check_button_pressed(mb_left) && _hover!=-1;
     var _confirm=keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter);
+    var _gp_confirm=false;
+    if(_gp>=0) {
+        var _gpc=gamepad_button_check(_gp,scr_gamepad_jump_btn(_gp));
+        _gp_confirm=_gpc && !global.gp_prev_pc;
+        global.gp_prev_pc=_gpc;
+    }
+    _confirm=_confirm||_gp_confirm;
     if(!_click && !_confirm)return;
     if(_click)global.pause_index=_hover;
     scr_pause_select(global.pause_index);
