@@ -11,3 +11,5 @@ attack_duration=120;
 base_y=y;
 depth=-4;
 hover_phase=0;
+difficulty=0;
+speed_scale=1;

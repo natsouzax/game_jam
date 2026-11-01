@@ -12,24 +12,28 @@ switch(kind) {
         y=home_y+sin(phase*2.7)*bob_amount;
         break;
     case 3:
-        phase+=patrol_speed;
+        phase+=0.014;
         var _star_fall=phase mod 1;
-        if(_star_fall<fall_t) home_x=irandom_range(120,room_width-120);
         fall_t=_star_fall;
-        x=home_x+sin(phase*6)*34;
+        x+=walk_dir*patrol_speed;
+        if(x<64){x=64;walk_dir=1;}
+        else if(x>room_width-64){x=room_width-64;walk_dir=-1;}
         y=home_y-fall_range/2+_star_fall*fall_range;
         break;
     case 4:
-        phase+=patrol_speed;
+        phase+=0.020;
         var _metal_fall=phase mod 1;
-        if(_metal_fall<fall_t) home_x=irandom_range(120,room_width-120);
         fall_t=_metal_fall;
-        x=home_x+sin(phase*3)*18;
+        x+=walk_dir*patrol_speed;
+        if(x<64){x=64;walk_dir=1;}
+        else if(x>room_width-64){x=room_width-64;walk_dir=-1;}
         y=home_y-fall_range/2+_metal_fall*fall_range;
         break;
     default:
-        phase+=patrol_speed;
-        x=home_x+sin(phase)*orbit_reach;
+        phase+=0.08;
+        x+=walk_dir*patrol_speed;
+        if(x<64){x=64;walk_dir=1;}
+        else if(x>room_width-64){x=room_width-64;walk_dir=-1;}
         y=home_y+sin(phase*2)*bob_amount;
         break;
 }
@@ -42,7 +46,7 @@ for(var _i=0;_i<2;_i++) {
             _p.vy = _p.jump_speed;
             _p.invulnerable = 10;
             scr_sfx(sfx_hit, 0.04);
-            if (hp <= 0) { instance_destroy(); }
+            if (hp <= 0) { _p.material_count++; instance_destroy(); exit; }
         } else {
             with(_p){enemy_hits++;scr_player_die();}
         }

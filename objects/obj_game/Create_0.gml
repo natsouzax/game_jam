@@ -1,5 +1,6 @@
 global.qa_regression=false;
 global.boot_test=false;
+global.qa_block_test=false;
 qa_regression_stage=0;qa_regression_hold=0;
 global.qa_skip_ending=false;
 if (!variable_global_exists("game_state")) global.game_state="title";
@@ -33,6 +34,7 @@ for(var _a=1;_a<=parameter_count();_a++) {
     if(_arg=="--qa-solo1"){global.qa=true;global.qa_solo=0;}
     if(_arg=="--qa-solo2"){global.qa=true;global.qa_solo=1;}
     if(_arg=="--boot-test")global.boot_test=true;
+    if(_arg=="--qa-block-test"){global.qa=true;global.qa_block_test=true;}
 }
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
 if(global.qa && (global.game_state=="studio" || global.game_state=="video")) global.game_state="title";
@@ -41,7 +43,8 @@ random_set_seed(global.qa ? 7231 : current_time);
 scr_audio_init();
 if(global.game_state=="studio" || global.game_state=="video")scr_music_stop();
 else scr_screen_music(global.game_state);
-spawn_timer=120;spawn_side=0;ending_timer=0;camera_y=room_height-768;bg_y=camera_y;altitude=0;depth=400;
+spawn_timer=30;spawn_side=0;ending_timer=0;camera_y=room_height-768;bg_y=camera_y;altitude=0;depth=400;
+enemy_spawn_timer=360;enemy_respawn_queue=[];
 if (!variable_global_exists("gameover_choice")) global.gameover_choice=0;
 global.gameover_timer=0;
 global.pause_index=0;global.pause_stage=0;global.pause_timer=0;global.pause_guard=0;
@@ -57,13 +60,13 @@ var _rs=instance_create_layer(826,_floor,"Instances_1",obj_world_solid);
 _rs.solid_width=540;_rs.solid_height=128;
 var _room_name=room_get_name(room);
 if (_room_name=="Room1") {
-    var _e1=instance_create_layer(720, scr_floor_y()-40, "Instances_1", obj_enemy);
-    _e1.home_y = _e1.y;
-    var _e2=instance_create_layer(1040, scr_floor_y()-200, "Instances_1", obj_enemy_flying);
-    _e2.home_y = _e2.y;
+    // One readable ground enemy at the start; the director fills a second slot later.
+    var _starter_enemy=scr_enemy_make(obj_enemy,720,scr_floor_y()-40,2,0);
+    _starter_enemy.patrol_speed*=0.82;
 } else if (_room_name=="Room2") {
     // Second stage: the demon patrols the sky above the city.
-    instance_create_layer(683, 640, "Instances_1", obj_demon);
+    var _demon=instance_create_layer(683, 640, "Instances_1", obj_demon);
+    if(!global.qa) scr_enemy_apply_difficulty(_demon,0.72);
 }
 display_set_gui_size(1366,768);gpu_set_texfilter(false);
 view_enabled=true;view_visible[0]=true;cam=view_camera[0];camera_set_view_size(cam,1366,768);camera_set_view_pos(cam,0,camera_y);

@@ -1,6 +1,7 @@
 if(global.game_state!="pause")global.game_timer++;
 var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
 if(_p1==noone || _p2==noone)exit;
+if(global.qa_block_test){scr_qa_block_interaction(_p1,_p2);exit;}
 if(global.pause_guard>0)global.pause_guard--;
 if(variable_global_exists("retry_pending") && global.retry_pending) {
     global.retry_pending=false;
@@ -94,9 +95,9 @@ if(global.game_state=="studio") {
     if(global.death_window_timer>0) global.death_window_timer--;
     // resource spawn
     spawn_timer--;
-    if(instance_number(obj_material)<4 && spawn_timer<=0) {
-        // Two uniform picks averaged: covers the whole map with a natural centre bias.
-        var _drop_x=(irandom_range(64,room_width-64)+irandom_range(64,room_width-64))/2;
+    if(instance_number(obj_material)<12 && spawn_timer<=0) {
+        // Scatter each drop evenly across the full playfield.
+        var _drop_x=irandom_range(64,room_width-64);
         var _drop_y=camera_y+16;
         for(var _si=0;_si<instance_number(obj_world_solid);_si++) {
             var _roof=instance_find(obj_world_solid,_si);
@@ -105,7 +106,7 @@ if(global.game_state=="studio") {
                 _drop_y=_roof.y+_roof.solid_height+20;
         }
         instance_create_layer(_drop_x,_drop_y,"Instances_1",obj_material);
-        spawn_timer=120;
+        spawn_timer=scr_resource_drop_interval(altitude);
     }
     // life item spawn
     life_spawn_timer--;
@@ -123,6 +124,7 @@ if(global.game_state=="studio") {
             instance_create_layer(_lx,_ly,"Instances_1",obj_life_item);
         }
     }
+    if(!global.qa) scr_enemy_director();
     // falling hazards ramp up with the climb height
     if(!global.qa) {
         var _hazard_level=clamp((altitude-0.32)/0.68,0,1);

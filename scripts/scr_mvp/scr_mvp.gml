@@ -1,6 +1,7 @@
 #macro DASH_CHARGE_FRAMES 45
 #macro DASH_THRUST 40
 #macro DASH_THRUST_DECAY 1.0
+#macro ENEMY_ACTIVE_CAP 2
 
 function scr_player_init(_index) {
     player_number = _index; active_player=true; body_half_width = 16; body_height = 70;
@@ -18,33 +19,135 @@ function scr_player_init(_index) {
 function scr_floor_y() {
     return room_height - 128;
 }
-// One distinct hazard per phase (1..5): duck, bat, patrol robot, star, falling metal.
+// Compatibility helper for scripted waves. Ducks and bats are no longer spawned.
 function scr_enemy_spawn(_level) {
-    var _home_y=1408-(_level-1)*192-120;
-    var _e=instance_create_layer(672,_home_y,"Instances_1",obj_enemy);
-    _e.kind=_level-1;
-    _e.level_id=_level;
-    _e.home_x=672;_e.home_y=_home_y;
-    _e.phase=_level*0.9;
-    switch(_e.kind) {
-        case 0:
-            _e.x=180;_e.home_x=180;_e.home_y=1374;
-            _e.walk_dir=1;_e.patrol_speed=1.4;_e.hit_radius=28;
-            break;
-        case 1:
-            _e.home_x=room_width/2;_e.patrol_speed=0.050;_e.orbit_reach=570;_e.bob_amount=30;_e.hit_radius=31;
-            break;
-        case 2:
-            _e.home_x=room_width/2;_e.patrol_speed=0.056;_e.orbit_reach=560;_e.bob_amount=16;_e.hit_radius=34;
-            break;
-        case 3:
-            _e.home_y=705;_e.patrol_speed=0.014;_e.fall_range=100;_e.hit_radius=28;
-            break;
-        case 4:
-            _e.home_y=510;_e.patrol_speed=0.020;_e.fall_range=90;_e.hit_radius=32;
-            break;
+    var _d=clamp((_level-1)/4,0,1);
+    var _kind=(_d<0.50?2:(_d<0.78?3:4));
+    var _home_y=clamp(1408-(_level-1)*192-120,96,room_height-96);
+    return scr_enemy_make(obj_enemy,room_width/2,_home_y,_kind,_d);
+}
+function scr_enemy_altitude() {
+    var _g=instance_find(obj_game,0);
+    return (_g!=noone ? clamp(_g.altitude,0,1) : 0);
+}
+function scr_enemy_apply_difficulty(_e,_difficulty) {
+    var _d=clamp(_difficulty,0,1);
+    _e.difficulty=_d;
+    if(_e.object_index==obj_enemy) {
+        _e.hp=1+floor(_d*2);
+        _e.patrol_speed*=1+_d*0.8;
+        _e.hit_radius+=round(_d*6);
+    } else if(_e.object_index==obj_enemy_flying) {
+        _e.hp=1+floor(_d*2);
+        _e.speed_scale=1+_d*0.7;
+        _e.attack_timer=round(_e.attack_timer/_e.speed_scale);
+        _e.attack_duration=round(lerp(120,78,_d));
+    } else if(_e.object_index==obj_demon) {
+        _e.hp=2+floor(_d*2);
+        _e.speed_scale=1+_d*0.5;
+        _e.attack_timer=round(_e.attack_timer/_e.speed_scale);
+        _e.attack_duration=round(lerp(90,62,_d));
     }
+}
+function scr_enemy_make(_object,_x,_y,_kind,_difficulty) {
+    var _e=instance_create_layer(_x,_y,"Instances_1",_object);
+    if(_object==obj_enemy) {
+        _e.kind=_kind;_e.home_x=_x;_e.home_y=_y;_e.phase=random(10);_e.fall_t=0;
+        switch(_kind) {
+            case 0:
+                _e.walk_dir=(irandom(1)==0?-1:1);_e.patrol_speed=1.4;_e.hit_radius=28;
+                break;
+            case 1:
+                _e.patrol_speed=0.050;_e.orbit_reach=irandom_range(240,520);_e.bob_amount=30;_e.hit_radius=31;
+                break;
+            case 2:
+                _e.walk_dir=(irandom(1)==0?-1:1);_e.patrol_speed=1.25;_e.bob_amount=7;_e.hit_radius=34;
+                break;
+            case 3:
+                _e.walk_dir=(irandom(1)==0?-1:1);_e.patrol_speed=1.0;_e.fall_range=100;_e.hit_radius=28;
+                break;
+            case 4:
+                _e.walk_dir=(irandom(1)==0?-1:1);_e.patrol_speed=1.2;_e.fall_range=90;_e.hit_radius=32;
+                break;
+        }
+    }
+    scr_enemy_apply_difficulty(_e,_difficulty);
     return _e;
+}
+function scr_enemy_wave_size(_altitude) {
+    var _d=clamp(_altitude,0,1);
+    // Quiet opening, a two-enemy stretch, then breathing room for the climb/finale.
+    if(_d>=0.24 && _d<0.52) return 2;
+    return 1;
+}
+function scr_resource_drop_interval(_altitude) {
+    var _d=clamp(_altitude,0,1);
+    // The middle climb is a calmer resource-rich stretch.
+    if(_d>=0.52 && _d<0.72) return 30;
+    if(_d<0.24) return 75;
+    if(_d<0.52) return 90;
+    return 54;
+}
+function scr_enemy_notify_death(_object,_kind,_home_x,_home_y) {
+    if(global.qa) return;
+    if(_object==obj_demon) return;
+    var _g=instance_find(obj_game,0);
+    if(_g==noone || array_length(_g.enemy_respawn_queue)>=ENEMY_ACTIVE_CAP) return;
+    var _d=scr_enemy_altitude();
+    array_push(_g.enemy_respawn_queue,{obj_index:_object,kind:_kind,home_x:_home_x,home_y:_home_y,
+        timer:round(lerp(420,240,_d))+irandom_range(0,60)});
+}
+function scr_enemy_spawn_extra(_difficulty) {
+    var _d=clamp(_difficulty,0,1);
+    var _cam_top=camera_get_view_y(view_camera[0]);
+    var _cam_bottom=_cam_top+camera_get_view_height(view_camera[0]);
+    var _object=obj_enemy;
+    var _kind=2;
+    var _roll=random(1);
+    if(_d<0.35) _kind=2;
+    else if(_d<0.72) _kind=(_roll<0.72?2:3);
+    else _kind=(_roll<0.45?2:(_roll<0.78?3:4));
+    var _x=0;var _y=0;var _clear=false;
+    for(var _try=0;_try<10;_try++) {
+        _x=irandom_range(90,room_width-90);
+        _y=irandom_range(floor(max(96,_cam_top+120)),ceil(min(room_height-96,_cam_bottom-120)));
+        _clear=true;
+        for(var _pi=0;_pi<2;_pi++) {
+            var _p=instance_find((_pi==0?obj_player_p1:obj_player_p2),0);
+            if(_p!=noone && _p.active_player && !_p.dead && point_distance(_x,_y,_p.x,_p.y-35)<160) _clear=false;
+        }
+        if(scr_world_aabb_solid(_x-24,_y-24,_x+24,_y+24)) _clear=false;
+        if(_clear) break;
+    }
+    if(!_clear) return;
+    scr_enemy_make(_object,_x,_y,_kind,_d);
+}
+function scr_enemy_director() {
+    var _g=instance_find(obj_game,0);
+    if(_g==noone) return;
+    var _d=scr_enemy_altitude();
+    var _count=instance_number(obj_enemy)+instance_number(obj_enemy_flying)+instance_number(obj_demon);
+    var _queued=array_length(_g.enemy_respawn_queue);
+    // A dead enemy waits until the rest of its current wave is gone.
+    if(_queued>0) {
+        if(_count>0) return;
+        var _entry=_g.enemy_respawn_queue[0];
+        _entry.timer--;
+        if(_entry.timer<=0) {
+            array_delete(_g.enemy_respawn_queue,0,1);
+            scr_enemy_make(_entry.obj_index,clamp(_entry.home_x,90,room_width-90),
+                clamp(_entry.home_y,96,room_height-96),_entry.kind,_d);
+            _g.enemy_spawn_timer=round(lerp(420,240,_d));
+        }
+        return;
+    }
+    var _target=min(ENEMY_ACTIVE_CAP,scr_enemy_wave_size(_d));
+    if(_count>=_target || _count>=ENEMY_ACTIVE_CAP) return;
+    _g.enemy_spawn_timer--;
+    if(_g.enemy_spawn_timer<=0) {
+        _g.enemy_spawn_timer=round(lerp(360,210,_d))+irandom_range(0,45);
+        scr_enemy_spawn_extra(_d);
+    }
 }
 // Section 0 is ground-to-first-checkpoint; each next section is 192 px high.
 function scr_tower_section_at_y(_top) {
@@ -114,7 +217,7 @@ function scr_player_dash_ability(_from_x) {
             for (var _i=instance_number(_obj)-1;_i>=0;_i--) {
                 var _e=instance_find(_obj,_i);
                 if (_e!=noone && _e.x>_left && _e.x<_right && _e.y>_top && _e.y<_bottom) {
-                    instance_destroy(_e);_kills++;
+                    instance_destroy(_e);_kills++;material_count++;
                 }
             }
         }
@@ -193,15 +296,26 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false) {
     if (_m != noone && abs(_m.x-x)<40 && _m.y+18>y-body_height && _m.y-18<y) {
         material_count++; collected_total++; instance_destroy(_m); scr_sfx(sfx_collect, 0.03);
     }
-    if (_build && material_count > 0 && !grounded) {
-        var _bx = floor(x/64)*64;
-        var _by = ceil(y/64)*64;
+    if (_build) {
+        var _target_cell=scr_world_build_target(x,y);
+        var _bx=_target_cell[0];var _by=_target_cell[1];
+        var _old_block=scr_world_block_at(_bx,_by);
+        if(_old_block!=noone && !_old_block.is_checkpoint && _old_block.builder_number>=0) {
+            if(_old_block.crack_until>=global.game_timer) {
+                material_count++;
+                instance_destroy(_old_block);
+                scr_sfx(sfx_block,0.05);
+            } else _old_block.crack_until=global.game_timer+30;
+        } else if(material_count>0 && !grounded) {
         var _other_player = instance_find((player_number==0 ? obj_player_p2 : obj_player_p1),0);
         var _occupied_by_partner = (_other_player != noone && _other_player.active_player && _other_player.x+16>_bx && _other_player.x-16<_bx+64 && _other_player.y>_by && _other_player.y-70<_by+64);
-        if (_bx>=64 && _bx+64<=room_width-64 && _by>=64 && _by+64<=room_height && !_occupied_by_partner && !scr_world_aabb_solid(_bx,_by,_bx+64,_by+64)) {
+        var _attached=scr_world_build_is_attached(_bx,_by);
+        if (_bx>=64 && _bx+64<=room_width-64 && _by>=64 && _by+64<=room_height
+            && _attached && !_occupied_by_partner && !scr_world_aabb_solid(_bx,_by,_bx+64,_by+64)) {
             var _new_block=instance_create_layer(_bx,_by,"Instances_1",obj_build_block);
             _new_block.builder_number=player_number;
             material_count--; built_total++; scr_sfx(sfx_block, 0.05);
+        }
         }
     }
     if (grounded) {

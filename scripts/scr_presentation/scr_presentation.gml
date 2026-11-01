@@ -528,8 +528,8 @@ function scr_begin_intro() {
         _p.active_player=(global.player_count==2 || _i==global.solo_character);
         if(global.player_count==1 && _p.active_player){_p.x=(_i==0?270:1096);_p.respawn_x=_p.x;_p.facing=1;}
     }
-    global.game_state="intro";global.game_timer=0;
-    global.intro_scene=0;
+    // Show the three-scene animated setup after character selection for every run.
+    global.game_state="intro";global.game_timer=0;global.intro_scene=0;
     scr_screen_music("intro");scr_sfx(sfx_intro_whoosh);
 }
 

@@ -1,9 +1,21 @@
 if (global.game_state != "play") exit;
-hover_phase += 0.03;
+hover_phase += 0.03 * speed_scale;
 attack_timer = max(0, attack_timer - 1);
 
 if (state == 0) {
-    // smooth hover
+    // Follow the climb even between dives; never teleport to a new player.
+    var _chase=noone;var _chase_distance=100000;
+    for(var _ci=0;_ci<2;_ci++) {
+        var _candidate=instance_find((_ci==0?obj_player_p1:obj_player_p2),0);
+        if(_candidate!=noone && _candidate.active_player && !_candidate.dead) {
+            var _distance=point_distance(x,y,_candidate.x,_candidate.y-35);
+            if(_distance<_chase_distance){_chase=_candidate;_chase_distance=_distance;}
+        }
+    }
+    if(_chase!=noone) {
+        start_x+=clamp((_chase.x-start_x)*0.012,-1.8,1.8);
+        start_y+=clamp((_chase.y-35-start_y)*0.012,-1.2,1.2);
+    }
     base_y = lerp(base_y, start_y, 0.05);
     x = start_x + sin(hover_phase * 0.7) * 60;
     y = base_y + sin(hover_phase) * 12;
@@ -40,7 +52,7 @@ if (state == 0) {
     y = lerp(start_y, target_y, _s) - _arc;
     if (_t >= 1) {
         state = 0;
-        attack_timer = 7 * 60;
+        attack_timer = round(420 / speed_scale);
         start_x = x;
         start_y = y;
         base_y = y;
@@ -58,9 +70,9 @@ for (var _i = 0; _i < 2; _i++) {
             _p.vy = _p.jump_speed;
             _p.invulnerable = 10;
             scr_sfx(sfx_hit, 0.04);
-            if (hp <= 0) { instance_destroy(); exit; }
+            if (hp <= 0) { _p.material_count++; instance_destroy(); exit; }
             state = 0;
-            attack_timer = 7 * 60;
+            attack_timer = round(420 / speed_scale);
             start_x = x;
             start_y = y;
             base_y = y;

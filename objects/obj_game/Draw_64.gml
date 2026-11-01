@@ -7,8 +7,8 @@ if(_state=="studio") {
     draw_set_halign(fa_center);draw_set_valign(fa_middle);
     draw_text_transformed(683,384,"Lusitanos Games",2.1,2.1,0);
     draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_alpha(1);
-    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1120,700,1352,752,false);draw_set_alpha(1);
-    scr_ui_hint(1236,726,"E","PULAR");
+    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1288,700,1352,752,false);draw_set_alpha(1);
+    draw_set_color(c_white);draw_triangle(1310,715,1310,737,1326,726,false);
     draw_set_halign(fa_left);draw_set_valign(fa_top);
 } else if(_state=="video") {
     draw_set_color(c_black);draw_rectangle(0,0,1366,768,false);
@@ -18,8 +18,8 @@ if(_state=="studio") {
             draw_surface_stretched(_video_frame[1],0,0,1366,768);
         if(_video_frame[0]==-1)global.boot_video_error=true;
     }
-    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1120,700,1352,752,false);draw_set_alpha(1);
-    scr_ui_hint(1236,726,"E","PULAR");
+    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1288,700,1352,752,false);draw_set_alpha(1);
+    draw_set_color(c_white);draw_triangle(1310,715,1310,737,1326,726,false);
     draw_set_halign(fa_left);draw_set_valign(fa_top);
 } else if(_state=="title")scr_draw_title_menu();
 else if(_state=="intro")scr_draw_intro();
