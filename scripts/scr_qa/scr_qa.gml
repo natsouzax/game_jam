@@ -95,28 +95,30 @@ function scr_qa_input() {
 // Focused runtime fixture, separate from the action-driven full-game replay.
 function scr_qa_section_reset_test(_p1,_p2) {
     var _floor=scr_floor_y();
-    var _earlier=instance_create_layer(64,_floor-32,"Instances_1",obj_build_block);
-    var _current_one=instance_create_layer(128,_floor-224,"Instances_1",obj_build_block);
-    var _current_two=instance_create_layer(192,_floor-256,"Instances_1",obj_build_block);
-    var _later=instance_create_layer(256,_floor-416,"Instances_1",obj_build_block);
-    _current_one.builder_number=0;_current_two.builder_number=1;
-    _p1.checkpoint_level=1;_p1.respawn_x=640;_p1.respawn_y=_floor-192;_p1.material_count=3;
-    with(_p1) scr_player_recover();
-    var _section_one_ok=!instance_exists(_current_one) && !instance_exists(_current_two)
-        && instance_exists(_earlier) && instance_exists(_later)
-        && _p1.x==640 && _p1.y==_floor-192 && _p1.material_count==3 && _p1.reset_blocks_total==2;
-    _p2.material_count=2;
-    with(_p2) scr_player_recover();
+    var _created=[];
+    for(var _b=0;_b<14;_b++) {
+        var _blk=instance_create_layer(64+(_b mod 7)*64,_floor-64-(_b div 7)*64,"Instances_1",obj_build_block);
+        _blk.builder_number=(_b mod 2);
+        array_push(_created,_blk);
+    }
+    _p1.checkpoint_level=1;_p1.respawn_x=640;_p1.respawn_y=_floor-192;_p1.material_count=3;_p1.player_lives=2;
+    with(_p1) scr_player_die();
+    var _remaining_after_damage=0;
+    for(var _c=0;_c<array_length(_created);_c++) if(instance_exists(_created[_c])) _remaining_after_damage++;
+    var _damage_preserves_ok=(_remaining_after_damage==14 && _p1.reset_blocks_total==0 && _p1.player_lives==1);
+    _p2.material_count=2;_p2.player_lives=1;
+    with(_p2) scr_player_die();
+    var _remaining_after_death=0;
+    for(var _d=0;_d<array_length(_created);_d++) if(instance_exists(_created[_d])) _remaining_after_death++;
     var _fixed=0;
     for(var _i=0;_i<instance_number(obj_build_block);_i++) {
         if(instance_find(obj_build_block,_i).is_checkpoint) _fixed++;
     }
-    var _ok=_section_one_ok && !instance_exists(_earlier) && instance_exists(_later)
-        && _p2.y==_floor && _p2.material_count==2 && _p2.reset_blocks_total==1
-        && _fixed==0 && instance_number(obj_build_block)==1 && _p1.recovery_valid && _p2.recovery_valid;
-    return {passed:_ok,section_one_removed:_p1.reset_blocks_total,section_zero_removed:_p2.reset_blocks_total,
-        fixed_platforms:_fixed,later_section_preserved:instance_exists(_later),both_builders_removed:_section_one_ok,
-        inventories_preserved:_p1.material_count==3 && _p2.material_count==2,checkpoint_return:_p1.y==_floor-192 && _p2.y==_floor};
+    var _ok=_damage_preserves_ok && _remaining_after_death==4 && _p2.reset_blocks_total==10
+        && _fixed==0 && _p1.recovery_valid && _p2.recovery_valid;
+    return {passed:_ok,damage_removed:_p1.reset_blocks_total,death_removed:_p2.reset_blocks_total,
+        remaining_after_damage:_remaining_after_damage,remaining_after_death:_remaining_after_death,
+        fixed_platforms:_fixed,inventories_preserved:_p1.material_count==3 && _p2.material_count==2};
 }
 
 // Regression fixture for split floor, independent jump/dash and death menu retry.
@@ -130,14 +132,41 @@ function scr_qa_regression(_p1,_p2) {
         var _bank=scr_world_aabb_solid(180,_floor,220,_floor+1);
         with(_p1) {
             x=200;y=scr_floor_y();vy=0;
-            scr_player_tick(0,true,false,false);
+            scr_player_tick(0,true,false,false,true);
         }
         var _normal=abs(_p1.vy-(-11+0.48))<0.01 && _p1.charge==0 && _p1._hthrust==0;
+        // Releasing jump key early immediately stops upward ascent.
+        with(_p1) {
+            scr_player_tick(0,false,false,false,false);
+        }
+        var _early_stop=(_p1.vy>=0 && !_p1.jump_rising);
+        // Holding jump key climbs higher than releasing early and caps at max height.
+        var _min_y_short=_floor;
+        with(_p1) {
+            x=200;y=scr_floor_y();vy=0;
+            scr_player_tick(0,true,false,false,true);
+            repeat(3){scr_player_tick(0,false,false,false,true);_min_y_short=min(_min_y_short,y);}
+            repeat(20){scr_player_tick(0,false,false,false,false);_min_y_short=min(_min_y_short,y);}
+        }
+        var _min_y_full=_floor;
+        with(_p1) {
+            x=200;y=scr_floor_y();vy=0;
+            scr_player_tick(0,true,false,false,true);
+            repeat(40){scr_player_tick(0,false,false,false,true);_min_y_full=min(_min_y_full,y);}
+        }
+        var _var_jump=(_early_stop && _min_y_full<_min_y_short-60);
+        // Releasing Q before full charge does not jump (Q is only Dash).
+        with(_p1) {
+            x=200;y=scr_floor_y();vy=0;charge=0;_hthrust=0;
+            repeat(10)scr_player_tick(1,false,false,true,false);
+            scr_player_tick(0,false,false,false,false);
+        }
+        var _partial_dash_no_jump=(_p1.charge==0 && _p1._hthrust==0 && _p1.y==_floor);
         with(_p1) {
             x=200;y=scr_floor_y();vy=0;
             repeat(150)scr_player_tick(1,false,false,true);
         }
-        var _held=_p1.charge==DASH_CHARGE_FRAMES && _p1.x==200;
+        var _held=_p1.charge==DASH_CHARGE_FRAMES && _p1.x==200 && _var_jump && _partial_dash_no_jump;
         var _dash_enemy=instance_create_layer(226,scr_floor_y()-30,"Instances_1",obj_enemy);
         with(_p1)scr_player_tick(0,false,false,false);
         var _dash=_p1.x==200+DASH_THRUST && _p1._hthrust>0 && _p1.vy<0;
@@ -159,8 +188,22 @@ function scr_qa_regression(_p1,_p2) {
         _g.qa_regression_hold++;
         if(_g.qa_regression_hold<12)return;
         _g.qa_regression_hold=0;
-        _p1.player_lives=1;
+        var _test_blocks=[];
+        for(var _bi=0;_bi<14;_bi++) {
+            var _tb=instance_create_layer(64+(_bi mod 7)*64,scr_floor_y()-64-(_bi div 7)*64,"Instances_1",obj_build_block);
+            _tb.builder_number=0;
+            array_push(_test_blocks,_tb);
+        }
+        _p1.player_lives=2;
         with(_p1)scr_player_die();
+        var _after_dmg=0;
+        for(var _ci=0;_ci<array_length(_test_blocks);_ci++) if(instance_exists(_test_blocks[_ci])) _after_dmg++;
+        // Second hit kills the player (lives == 0) and removes at most 10 random blocks.
+        with(_p1)scr_player_die();
+        var _after_death=0;
+        for(var _di=0;_di<array_length(_test_blocks);_di++) if(instance_exists(_test_blocks[_di])) _after_death++;
+        global.regression_report.damage_keeps_blocks=(_after_dmg==14);
+        global.regression_report.death_removes_max_10=(_after_death==4);
         global.regression_report.solo_menu=global.game_state=="gameover";
         _g.qa_regression_stage=2;
     } else if(_g.qa_regression_stage==2) {
@@ -175,7 +218,7 @@ function scr_qa_regression(_p1,_p2) {
         scr_gameover_select(1);
         global.regression_report.return_title=global.game_state=="title";
         var _r=global.regression_report;
-        _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.ability_kill && _r.ability_magnet && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
+        _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.ability_kill && _r.ability_magnet && _r.damage_keeps_blocks && _r.death_removes_max_10 && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
         var _file=file_text_open_write("qa_regression_result.json");
         file_text_write_string(_file,json_stringify(_r));file_text_close(_file);game_end();
     }

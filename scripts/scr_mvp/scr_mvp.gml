@@ -1,6 +1,8 @@
 #macro DASH_CHARGE_FRAMES 45
 #macro DASH_THRUST 40
 #macro DASH_THRUST_DECAY 1.0
+#macro JUMP_HOLD_MAX_FRAMES 20
+#macro JUMP_HOLD_BOOST 0.28
 
 function scr_player_init(_index) {
     player_number = _index; active_player=true; body_half_width = 16; body_height = 70;
@@ -12,6 +14,7 @@ function scr_player_init(_index) {
     checkpoint_level = 0; depth = -10; qa_jump_cooldown = 0; qa_target=noone;
     player_lives = 3; dead = false; respawn_timer = 0;
     charge = 0; _hthrust = 0; _hdir = 1; _jump_was_held = false; _charge_dir = 0; jump_held = false; _hjump_cooldown = 0;
+    jump_rising = false; jump_hold_frames = 0;
     dash_kills = 0; dash_kill_flash = 0; dash_collects = 0; dash_collect_flash = 0;
 }
 // Floor sits 128 px above the bottom of the room, so a taller room is more climb.
@@ -64,10 +67,31 @@ function scr_reset_section_blocks(_section) {
     for(var _n=0;_n<array_length(_remove);_n++) _valid=_valid && !instance_exists(_remove[_n]);
     return {removed:array_length(_remove),scope_ok:_valid};
 }
+function scr_remove_random_blocks(_max_remove=10) {
+    var _candidates=[];
+    for(var _i=0;_i<instance_number(obj_build_block);_i++) {
+        var _block=instance_find(obj_build_block,_i);
+        if(_block!=noone && !_block.is_checkpoint) array_push(_candidates,_block);
+    }
+    var _to_remove=min(array_length(_candidates),_max_remove);
+    var _removed=[];
+    for(var _r=0;_r<_to_remove;_r++) {
+        var _idx=irandom(array_length(_candidates)-1);
+        var _target=_candidates[_idx];
+        array_delete(_candidates,_idx,1);
+        array_push(_removed,_target);
+    }
+    for(var _j=0;_j<array_length(_removed);_j++) {
+        if(instance_exists(_removed[_j])) instance_destroy(_removed[_j]);
+    }
+    var _valid=true;
+    for(var _k=0;_k<array_length(_candidates);_k++) _valid=_valid && instance_exists(_candidates[_k]);
+    for(var _n=0;_n<array_length(_removed);_n++) _valid=_valid && !instance_exists(_removed[_n]);
+    return {removed:array_length(_removed),scope_ok:_valid};
+}
 function scr_player_recover() {
     var _stock_before=material_count;
-    var _reset=scr_reset_section_blocks(checkpoint_level);
-    reset_blocks_total+=_reset.removed; section_resets++;
+    // Taking non-lethal damage does not remove or alter any constructed blocks.
     var _cam_top=camera_get_view_y(view_camera[0]);
     var _cam_bottom=_cam_top+camera_get_view_height(view_camera[0]);
     x=respawn_x; y=respawn_y;
@@ -84,9 +108,10 @@ function scr_player_recover() {
     y=clamp(y,_cam_top+body_height+4,_cam_bottom-4);
     vy=0; grounded=scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
     charge=0; _hthrust=0; _jump_was_held=false; _charge_dir=0; jump_held=false; _hjump_cooldown=0;
+    jump_rising=false; jump_hold_frames=0;
     dash_kill_flash=0; dash_collect_flash=0;
     invulnerable=100; recoveries++; qa_target=noone; last_support=noone;
-    recovery_valid=recovery_valid && material_count==_stock_before && _reset.scope_ok;
+    recovery_valid=recovery_valid && material_count==_stock_before;
 }
 function scr_player_die() {
     if (!active_player) return;
@@ -95,6 +120,11 @@ function scr_player_die() {
         scr_player_recover();
         invulnerable = 120;
     } else {
+        // Blocks are only lost upon actual death (lives == 0), capped at 10 random blocks.
+        var _reset = scr_remove_random_blocks(10);
+        reset_blocks_total += _reset.removed;
+        section_resets++;
+        recovery_valid = recovery_valid && _reset.scope_ok;
         // A defeated teammate ends the attempt for the pair and for solo.
         scr_begin_gameover();
     }
@@ -139,7 +169,7 @@ function scr_player_dash_ability(_from_x) {
         }
     }
 }
-function scr_player_tick(_move, _jump, _build, _jump_held=false) {
+function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=true) {
     if (!active_player || global.game_state != "play") return;
     last_move=_move;
     if (invulnerable > 0) invulnerable--;
@@ -147,7 +177,7 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false) {
     if (dash_collect_flash>0) dash_collect_flash--;
     if (_move != 0) facing=sign(_move);
     grounded=scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
-    // Normal jump is immediate. Only the separate dash key can accumulate charge.
+    // Q / RShift charges only the horizontal dash; W / Up controls variable-height jump.
     var _charging=_jump_held && grounded && !_jump;
     var _release=_jump_was_held && !_jump_held && grounded;
     jump_held=_charging;
@@ -157,17 +187,38 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false) {
     }
     if (_jump && grounded) {
         vy=jump_speed;charge=0;_hthrust=0;_charge_dir=0;
+        jump_rising=true;jump_hold_frames=0;
         scr_sfx(sfx_jump,0.04);
     } else if (_release && charge>0) {
-        var _ratio=charge/DASH_CHARGE_FRAMES;
-        vy=jump_speed-6*_ratio;
         if (charge>=DASH_CHARGE_FRAMES) {
             _hdir=(_charge_dir!=0?_charge_dir:facing);
             _hthrust=DASH_THRUST;vy=-12;facing=_hdir;
+            jump_rising=false;jump_hold_frames=0;
+            scr_sfx(sfx_jump,0.04);
         }
-        charge=0;_charge_dir=0;scr_sfx(sfx_jump,0.04);
+        charge=0;_charge_dir=0;
     }
-    if (!grounded) {charge=0;_charge_dir=0;}
+    if (!grounded) {
+        charge=0;_charge_dir=0;
+        if (!_jump && jump_rising && _hthrust<=0) {
+            if (vy<0) {
+                if (!_jump_key_held) {
+                    vy=0;
+                    jump_rising=false;
+                    jump_hold_frames=0;
+                } else if (jump_hold_frames<JUMP_HOLD_MAX_FRAMES) {
+                    jump_hold_frames++;
+                    vy-=JUMP_HOLD_BOOST;
+                }
+            } else {
+                jump_rising=false;
+                jump_hold_frames=0;
+            }
+        }
+    } else if (!_jump) {
+        jump_rising=false;
+        jump_hold_frames=0;
+    }
     _jump_was_held=_charging;
     var _dir=(_hthrust>0?_hdir:sign(_move));
     var _speed=(_charging?0:(_hthrust>0?_hthrust:abs(_move)*move_speed));

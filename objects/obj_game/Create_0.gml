@@ -37,6 +37,7 @@ for(var _a=1;_a<=parameter_count();_a++) {
 game_set_speed(global.qa ? 300 : 60, gamespeed_fps);
 if(global.qa && (global.game_state=="studio" || global.game_state=="video")) global.game_state="title";
 if(global.qa)display_reset(0,false);
+else if(!global.boot_test && !window_get_fullscreen())window_set_fullscreen(true);
 random_set_seed(global.qa ? 7231 : current_time);
 scr_audio_init();
 if(global.game_state=="studio" || global.game_state=="video")scr_music_stop();

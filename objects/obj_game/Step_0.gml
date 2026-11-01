@@ -31,6 +31,7 @@ if(global.game_state=="play" && (keyboard_check_pressed(vk_escape)||keyboard_che
     exit;
 }
 if(!global.qa && keyboard_check_pressed(ord("M")))scr_audio_mute_toggle();
+if(!global.qa && keyboard_check_pressed(vk_f11))window_set_fullscreen(!window_get_fullscreen());
 if(global.boot_test && global.game_state=="title" && global.game_timer==45) {
     var _boot_report=file_text_open_write("boot_test_result.json");
     file_text_write_string(_boot_report,json_stringify({video_started:global.boot_video_started,video_played:global.boot_video_was_playing,video_error:global.boot_video_error,menu_reached:true}));

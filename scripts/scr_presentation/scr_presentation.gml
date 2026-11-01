@@ -574,15 +574,17 @@ function scr_player_controls() {
     else if(global.player_count==1 || player_number==0) {
         var _mv = keyboard_check(ord("D"))-keyboard_check(ord("A"));
         var _jp = keyboard_check_pressed(ord("W"));
+        var _jp_hold = keyboard_check(ord("W"));
         var _jh = keyboard_check(ord("Q"));
         var _bl = keyboard_check_pressed(ord("E"));
-        scr_player_tick(_mv,_jp,_bl,_jh);
+        scr_player_tick(_mv,_jp,_bl,_jh,_jp_hold);
     } else {
         var _mv2 = keyboard_check(vk_right)-keyboard_check(vk_left);
         var _jp2 = keyboard_check_pressed(vk_up);
+        var _jp2_hold = keyboard_check(vk_up);
         var _jh2 = keyboard_check(vk_rshift);
         var _bl2 = keyboard_check_pressed(vk_enter);
-        scr_player_tick(_mv2,_jp2,_bl2,_jh2);
+        scr_player_tick(_mv2,_jp2,_bl2,_jh2,_jp2_hold);
     }
 }
 
@@ -880,9 +882,32 @@ function scr_gameover_input(_timer) {
 
 function scr_gameover_select(_choice) {
     if (_choice==0) {
-        global.game_state="play";global.game_timer=0;global.retry_pending=true;
+        // Retry preserves the surviving tower (up to 10 random blocks were already removed on death).
+        global.game_state="play";global.game_timer=0;global.retry_pending=false;
+        global.death_window_timer=0;
         scr_audio_silence();
-        if(room==Room1)room_restart();else room_goto(Room1);
+        scr_screen_music("play");
+        var _game=instance_find(obj_game,0);
+        if(_game!=noone) {
+            _game.camera_y=room_height-768;
+            camera_set_view_pos(_game.cam,0,_game.camera_y);
+        }
+        for(var _i=0;_i<2;_i++) {
+            var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
+            if(_p==noone)continue;
+            _p.dead=false;
+            _p.player_lives=3;
+            _p.respawn_timer=0;
+            _p.active_player=(global.player_count==2 || global.solo_character==_i);
+            _p.respawn_x=(_i==0?270:1096);
+            _p.respawn_y=scr_floor_y();
+            if(_p.active_player) {
+                with(_p) {
+                    scr_player_recover();
+                    invulnerable=120;
+                }
+            }
+        }
     } else scr_return_to_title();
 }
 
