@@ -32,6 +32,12 @@ if(global.game_state=="play" && (keyboard_check_pressed(vk_escape)||keyboard_che
 }
 if(!global.qa && keyboard_check_pressed(ord("M")))scr_audio_mute_toggle();
 if(!global.qa && keyboard_check_pressed(vk_f11))window_set_fullscreen(!window_get_fullscreen());
+if(!global.qa) {
+    if(keyboard_check(vk_escape)) {
+        global.esc_hold++;
+        if(global.esc_hold>=180) game_end();
+    } else global.esc_hold=0;
+}
 if(global.boot_test && global.game_state=="title" && global.game_timer==45) {
     var _boot_report=file_text_open_write("boot_test_result.json");
     file_text_write_string(_boot_report,json_stringify({video_started:global.boot_video_started,video_played:global.boot_video_was_playing,video_error:global.boot_video_error,menu_reached:true}));

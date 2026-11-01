@@ -1,0 +1,10 @@
+if(global.game_state!="play")exit;
+draw_set_color(make_color_rgb(220,220,230));
+draw_rectangle(x-10,y-30,x+10,y+20,false);
+draw_set_color(make_color_rgb(180,180,190));
+draw_rectangle(x-10,y-30,x+10,y+20,true);
+draw_set_color(make_color_rgb(120,120,130));
+draw_circle(x,y-38,8,false);
+draw_set_color(make_color_rgb(255,80,80));
+draw_circle(x-3,y-40,2,false);draw_circle(x+3,y-40,2,false);
+draw_set_color(c_white);

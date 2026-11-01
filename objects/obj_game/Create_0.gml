@@ -50,6 +50,7 @@ life_spawn_timer=irandom_range(300,600);
 hazard_timer=150;
 global.death_window_timer=0;
 global.restart_game=false;
+if (!variable_global_exists("esc_hold")) global.esc_hold=0;
 // tower platforms with gap
 var _floor=scr_floor_y();
 var _ls=instance_create_layer(0,_floor,"Instances_1",obj_world_solid);
@@ -57,11 +58,21 @@ _ls.solid_width=540;_ls.solid_height=128;
 var _rs=instance_create_layer(826,_floor,"Instances_1",obj_world_solid);
 _rs.solid_width=540;_rs.solid_height=128;
 var _room_name=room_get_name(room);
+// Clear the lowest floor: no enemies spawn on the ground level.
+// Spawn enemies at higher levels only.
 if (_room_name=="Room1") {
-    var _e1=instance_create_layer(720, scr_floor_y()-40, "Instances_1", obj_enemy);
-    _e1.home_y = _e1.y;
-    var _e2=instance_create_layer(1040, scr_floor_y()-200, "Instances_1", obj_enemy_flying);
-    _e2.home_y = _e2.y;
+    // Slime walks on player-placed blocks at mid height.
+    var _sl=instance_create_layer(500, scr_floor_y()-300, "Instances_1", obj_slime);
+    _sl.home_y=_sl.y;
+    // Skeleton teleports and shoots from a high perch.
+    var _sk=instance_create_layer(900, scr_floor_y()-500, "Instances_1", obj_skeleton);
+    _sk.home_x=_sk.x;_sk.home_y=_sk.y;
+    // Devil flies high, waiting to attack.
+    var _dv=instance_create_layer(700, scr_floor_y()-600, "Instances_1", obj_devil);
+    _dv.start_x=_dv.x;_dv.start_y=_dv.y;_dv.base_y=_dv.y;
+    // Foguinho (existing) flies high and avoids players.
+    var _fg=instance_create_layer(1000, scr_floor_y()-450, "Instances_1", obj_enemy_flying);
+    _fg.start_x=_fg.x;_fg.start_y=_fg.y;_fg.base_y=_fg.y;
 } else if (_room_name=="Room2") {
     // Second stage: the demon patrols the sky above the city.
     instance_create_layer(683, 640, "Instances_1", obj_demon);

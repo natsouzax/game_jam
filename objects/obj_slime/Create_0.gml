@@ -1,0 +1,9 @@
+hp=1;
+move_speed=1.2;
+dir=1;
+phase=0;
+depth=-4;
+home_y=y;
+gravity_speed=0.4;
+vy=0;
+grounded=false;
