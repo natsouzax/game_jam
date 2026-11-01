@@ -27,9 +27,11 @@ function scr_world_landing_surface(_left, _right, _previous_bottom, _next_bottom
     return _surface;
 }
 
-function scr_world_build_target(_player_x,_player_y) {
-    // Keep the block below the player and snap both axes to the 64px building grid.
-    return [floor(_player_x/64)*64,ceil(_player_y/64)*64];
+function scr_world_build_target(_player_x,_player_y,_move=0) {
+    // While airborne, follow forward movement; otherwise keep the block underfoot.
+    var _cell_x=floor(_player_x/64)*64;
+    if(_move!=0) _cell_x+=sign(_move)*64;
+    return [_cell_x,ceil(_player_y/64)*64];
 }
 
 function scr_world_build_is_attached(_x,_y) {
@@ -42,7 +44,12 @@ function scr_world_build_is_attached(_x,_y) {
         var _touch_right=(_x==_solid.x+_solid.solid_width && _overlap_y);
         var _touch_top=(_y+64==_solid.y && _overlap_x);
         var _touch_bottom=(_y==_solid.y+_solid.solid_height && _overlap_x);
-        if(_touch_left || _touch_right || _touch_top || _touch_bottom) return true;
+        var _touch_diag_tl=(_x+64==_solid.x && _y+64==_solid.y);
+        var _touch_diag_tr=(_x==_solid.x+_solid.solid_width && _y+64==_solid.y);
+        var _touch_diag_bl=(_x+64==_solid.x && _y==_solid.y+_solid.solid_height);
+        var _touch_diag_br=(_x==_solid.x+_solid.solid_width && _y==_solid.y+_solid.solid_height);
+        if(_touch_left || _touch_right || _touch_top || _touch_bottom
+           || _touch_diag_tl || _touch_diag_tr || _touch_diag_bl || _touch_diag_br) return true;
     }
     return false;
 }

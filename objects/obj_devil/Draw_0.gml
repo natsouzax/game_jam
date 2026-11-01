@@ -1,0 +1,10 @@
+if(global.game_state!="play")exit;
+draw_set_color(make_color_rgb(200,60,60));
+draw_ellipse(x-20,y-24,x+20,y+16,false);
+draw_set_color(make_color_rgb(140,30,30));
+draw_ellipse(x-20,y-24,x+20,y+16,true);
+draw_set_color(make_color_rgb(255,180,60));
+draw_circle(x,y-10,6,false);
+draw_set_color(make_color_rgb(60,20,20));
+draw_triangle(x-8,y-24,x+8,y-24,x,y-36,false);
+draw_set_color(c_white);

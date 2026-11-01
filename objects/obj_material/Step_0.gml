@@ -1,6 +1,9 @@
 if(global.game_state!="play")exit;
 age++;
 if(age>(landed?2400:3600)){instance_destroy();exit;}
+var _drop_altitude=scr_enemy_altitude();
+gravity_speed=scr_resource_fall_gravity(_drop_altitude);
+fall_max=scr_resource_fall_max(_drop_altitude);
 fall_speed = min(fall_speed + gravity_speed, fall_max);
 var _next_y = y + fall_speed;
 var _landing_y = scr_world_landing_surface(x - 18, x + 18, y + 18, _next_y + 18);

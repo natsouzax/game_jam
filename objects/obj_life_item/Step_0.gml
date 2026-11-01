@@ -10,7 +10,7 @@ else if (!scr_world_aabb_solid(x - 14, _next_y - 14, x + 14, _next_y + 14)) { y 
 for (var _i = 0; _i < 2; _i++) {
     var _p = instance_find((_i == 0 ? obj_player_p1 : obj_player_p2), 0);
     if (_p != noone && _p.active_player && !_p.dead && point_distance(x, y, _p.x, _p.y - 35) < 30) {
-        _p.player_lives = min(3, _p.player_lives + 1);
+        if(!scr_player_gain_life(_p))continue;
         scr_sfx(sfx_collect, 0.03);
         instance_destroy();
         exit;

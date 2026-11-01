@@ -1,0 +1,9 @@
+hp=1;
+move_speed=1.5;
+dir=1;
+spawn_count=0;
+max_spawns=3;
+spawn_timer=irandom_range(180,300);
+phase=0;
+depth=-4;
+home_y=y;

@@ -1,0 +1,9 @@
+hp=1;
+teleport_timer=irandom_range(600,900);
+shoot_timer=120;
+phase=0;
+depth=-4;
+home_y=y;
+home_x=x;
+projectile_speed=2.0;
+state=0; // 0 idle, 1 shooting
