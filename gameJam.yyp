@@ -40,6 +40,7 @@
     {"id":{"name":"obj_ground","path":"objects/obj_ground/obj_ground.yy",},},
     {"id":{"name":"obj_life_item","path":"objects/obj_life_item/obj_life_item.yy",},},
     {"id":{"name":"obj_material","path":"objects/obj_material/obj_material.yy",},},
+    {"id":{"name":"obj_meteor_enemy","path":"objects/obj_meteor_enemy/obj_meteor_enemy.yy",},},
     {"id":{"name":"obj_meteor","path":"objects/obj_meteor/obj_meteor.yy",},},
     {"id":{"name":"obj_player_p1","path":"objects/obj_player_p1/obj_player_p1.yy",},},
     {"id":{"name":"obj_player_p2","path":"objects/obj_player_p2/obj_player_p2.yy",},},

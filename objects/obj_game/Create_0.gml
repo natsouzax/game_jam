@@ -12,7 +12,19 @@ global.boot_video_started=false;
 global.boot_video_was_playing=false;
 global.boot_video_error=false;
 if (!variable_global_exists("game_timer")) global.game_timer=0;
-if (!variable_global_exists("menu_mode")) { global.menu_mode=1; global.menu_stage=0; global.solo_character=0; global.player_count=2; }
+if (!variable_global_exists("menu_mode")) { global.menu_mode=1; global.menu_stage=0; global.solo_character=0; global.player_count=2; global.title_choice=0; }
+if (!variable_global_exists("title_choice")) global.title_choice=0;
+if (!variable_global_exists("settings_index")) global.settings_index=0;
+if (!variable_global_exists("gp_prev_l")) {
+    global.gp_prev_l=false; global.gp_prev_r=false;
+    global.gp_prev_u=false; global.gp_prev_d=false;
+    global.gp_prev_c=false; global.gp_prev_b=false;
+    global.gp_prev_confirm_any=false;
+    global.gp_btn_last=-1;
+}
+if (!variable_global_exists("dbg_mv")) {
+    global.dbg_mv=0; global.dbg_jp=false; global.dbg_jh=false; global.dbg_bl=false; global.dbg_gp=-1;
+}
 if (!variable_global_exists("intro_seen")) global.intro_seen=[false,false,false];
 if (!variable_global_exists("qa_menu_ok")) global.qa_menu_ok=false;
 if (!variable_global_exists("qa_section_test")) global.qa_section_test=false;
@@ -40,16 +52,21 @@ if(global.qa)display_reset(0,false);
 else if(!global.boot_test && !window_get_fullscreen())window_set_fullscreen(true);
 random_set_seed(global.qa ? 7231 : current_time);
 scr_audio_init();
+scr_settings_load();
 if(global.game_state=="studio" || global.game_state=="video")scr_music_stop();
 else scr_screen_music(global.game_state);
 spawn_timer=120;spawn_side=0;ending_timer=0;camera_y=room_height-768;bg_y=camera_y;altitude=0;depth=400;
 if (!variable_global_exists("gameover_choice")) global.gameover_choice=0;
+if (!variable_global_exists("audio_muted")) global.audio_muted=false;
 global.gameover_timer=0;
 global.pause_index=0;global.pause_stage=0;global.pause_timer=0;global.pause_guard=0;
 life_spawn_timer=irandom_range(300,600);
 hazard_timer=150;
 global.death_window_timer=0;
 global.restart_game=false;
+global.auto_save_timer=3600;
+global.last_save_altitude=0;
+if (!variable_global_exists("level_saved")) global.level_saved=[false,false,false,false];
 if (!variable_global_exists("esc_hold")) global.esc_hold=0;
 // tower platforms with gap
 var _floor=scr_floor_y();
@@ -58,23 +75,9 @@ _ls.solid_width=540;_ls.solid_height=128;
 var _rs=instance_create_layer(826,_floor,"Instances_1",obj_world_solid);
 _rs.solid_width=540;_rs.solid_height=128;
 var _room_name=room_get_name(room);
-// Clear the lowest floor: no enemies spawn on the ground level.
-// Spawn enemies at higher levels only.
-if (_room_name=="Room1") {
-    // Slime walks on player-placed blocks at mid height.
-    var _sl=instance_create_layer(500, scr_floor_y()-300, "Instances_1", obj_slime);
-    _sl.home_y=_sl.y;
-    // Skeleton teleports and shoots from a high perch.
-    var _sk=instance_create_layer(900, scr_floor_y()-500, "Instances_1", obj_skeleton);
-    _sk.home_x=_sk.x;_sk.home_y=_sk.y;
-    // Devil flies high, waiting to attack.
-    var _dv=instance_create_layer(700, scr_floor_y()-600, "Instances_1", obj_devil);
-    _dv.start_x=_dv.x;_dv.start_y=_dv.y;_dv.base_y=_dv.y;
-    // Foguinho (existing) flies high and avoids players.
-    var _fg=instance_create_layer(1000, scr_floor_y()-450, "Instances_1", obj_enemy_flying);
-    _fg.start_x=_fg.x;_fg.start_y=_fg.y;_fg.base_y=_fg.y;
-} else if (_room_name=="Room2") {
-    // Second stage: the demon patrols the sky above the city.
+// Enemies are spawned dynamically based on altitude (see Step_0).
+// Only the demon appears in Room2.
+if (_room_name=="Room2") {
     instance_create_layer(683, 640, "Instances_1", obj_demon);
 }
 display_set_gui_size(1366,768);gpu_set_texfilter(false);

@@ -1,1 +1,1 @@
-{"charge":true,"solo_menu":true,"retry":true,"coop_menu":true,"return_title":true,"hole":true,"bank":true,"normal_jump":true,"passed":true,"dash":true,"ability_kill":true,"ability_magnet":true}
+{"damage_keeps_blocks":true,"death_removes_max_10":true,"solo_menu":true,"retry":true,"coop_menu":true,"return_title":true,"hole":true,"passed":true,"bank":true,"normal_jump":true,"dash":true,"ability_kill":true,"ability_magnet":true,"charge":true}

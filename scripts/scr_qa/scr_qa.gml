@@ -3,21 +3,22 @@ function scr_qa_report_name() {
     return global.qa_recovery_test?"qa_recovery_result.json":"qa_result.json";
 }
 function scr_qa_menu() {
-    // Same menu handler as physical inputs, including return from avatar selection.
+    // Stage 0 -> Stage 1 (Iniciar Jogo), then mode/character selection.
+    if(global.qa_frame==15)scr_menu_input(0,true,false);
     if(global.qa_frame==25)scr_menu_input(-1,false,false);
     if(global.qa_frame==35)scr_menu_input(0,true,false);
     if(global.qa_solo<0) {
         if(global.qa_frame==45) {
-            global.qa_menu_ok=global.menu_stage==1 && global.menu_mode==0;
+            global.qa_menu_ok=global.menu_stage==2 && global.menu_mode==0;
             scr_menu_input(0,false,true);
-            global.qa_menu_ok=global.qa_menu_ok && global.menu_stage==0;
+            global.qa_menu_ok=global.qa_menu_ok && global.menu_stage==1;
         }
         if(global.qa_frame==55)scr_menu_input(1,false,false);
         if(global.qa_frame==65)scr_menu_input(0,true,false);
     } else {
         if(global.qa_frame==45 && global.qa_solo==1)scr_menu_input(1,false,false);
         if(global.qa_frame==55) {
-            global.qa_menu_ok=global.menu_stage==1 && global.menu_mode==0 && global.solo_character==global.qa_solo;
+            global.qa_menu_ok=global.menu_stage==2 && global.menu_mode==0 && global.solo_character==global.qa_solo;
             scr_menu_input(0,true,false);
         }
     }
@@ -196,13 +197,15 @@ function scr_qa_regression(_p1,_p2) {
         }
         _p1.player_lives=2;
         with(_p1)scr_player_die();
+        var _unobstructed_ok=true;
+        with(_p1){_unobstructed_ok=!scr_is_spawn_obstructed(x,y);}
         var _after_dmg=0;
         for(var _ci=0;_ci<array_length(_test_blocks);_ci++) if(instance_exists(_test_blocks[_ci])) _after_dmg++;
         // Second hit kills the player (lives == 0) and removes at most 10 random blocks.
         with(_p1)scr_player_die();
         var _after_death=0;
         for(var _di=0;_di<array_length(_test_blocks);_di++) if(instance_exists(_test_blocks[_di])) _after_death++;
-        global.regression_report.damage_keeps_blocks=(_after_dmg==14);
+        global.regression_report.damage_keeps_blocks=(_after_dmg==14 && _unobstructed_ok);
         global.regression_report.death_removes_max_10=(_after_death==4);
         global.regression_report.solo_menu=global.game_state=="gameover";
         _g.qa_regression_stage=2;
@@ -216,7 +219,24 @@ function scr_qa_regression(_p1,_p2) {
         with(_p1)scr_player_die();
         global.regression_report.coop_menu=global.game_state=="gameover";
         scr_gameover_select(1);
-        global.regression_report.return_title=global.game_state=="title";
+        var _gp_arr=scr_gamepad_menu_input();
+        var _menu_gp_ok=(array_length(_gp_arr)==4);
+        // Verify non-inverted menu navigation: S (-1) moves down, W (+1) moves up; A (-1) selects left (0), D (+1) selects right (1).
+        global.menu_stage=0;global.title_choice=0;
+        scr_menu_input(0,false,false,-1,false);
+        var _down_ok=(global.title_choice==1);
+        scr_menu_input(0,false,false,1,false);
+        var _up_ok=(global.title_choice==0);
+        scr_menu_input(0,true,false,0,false);
+        var _enter_stage1=(global.menu_stage==1 && global.menu_mode==1);
+        scr_menu_input(-1,false,false,0,false);
+        var _left_ok=(global.menu_mode==0);
+        scr_menu_input(-1,false,false,0,false);
+        _left_ok=(_left_ok && global.menu_mode==0);
+        scr_menu_input(1,false,false,0,false);
+        var _right_ok=(global.menu_mode==1);
+        global.menu_stage=0;
+        global.regression_report.return_title=(global.game_state=="title" && _menu_gp_ok && _down_ok && _up_ok && _enter_stage1 && _left_ok && _right_ok);
         var _r=global.regression_report;
         _r.passed=_r.hole && _r.bank && _r.normal_jump && _r.charge && _r.dash && _r.ability_kill && _r.ability_magnet && _r.damage_keeps_blocks && _r.death_removes_max_10 && _r.solo_menu && _r.retry && _r.coop_menu && _r.return_title;
         var _file=file_text_open_write("qa_regression_result.json");

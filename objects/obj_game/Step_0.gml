@@ -31,7 +31,7 @@ if(global.game_state=="play" && (keyboard_check_pressed(vk_escape)||keyboard_che
     exit;
 }
 if(!global.qa && keyboard_check_pressed(ord("M")))scr_audio_mute_toggle();
-if(!global.qa && keyboard_check_pressed(vk_f11))window_set_fullscreen(!window_get_fullscreen());
+if(!global.qa && keyboard_check_pressed(vk_f11)){window_set_fullscreen(!window_get_fullscreen());scr_settings_save();}
 if(!global.qa) {
     if(keyboard_check(vk_escape)) {
         global.esc_hold++;
@@ -69,12 +69,17 @@ if(global.game_state=="studio") {
         var _vertical = (keyboard_check_pressed(ord("W")) || keyboard_check_pressed(vk_up))
             - (keyboard_check_pressed(ord("S")) || keyboard_check_pressed(vk_down));
         var _escape=keyboard_check_pressed(vk_escape);
+        var _gp_menu=scr_gamepad_menu_input();
+        if(_gp_menu[0]!=0)_direction=_gp_menu[0];
+        if(array_length(_gp_menu)>3 && _gp_menu[3]!=0)_vertical=_gp_menu[3];
+        _confirm=_confirm||_gp_menu[1];
+        _back=_back||_gp_menu[2];
         scr_menu_input(_direction,_confirm,_back,_vertical,_escape);
     }
 } else if(global.game_state=="intro") {
     global.intro_seen[min(2,global.game_timer div 240)]=true;
     scr_intro_audio();
-    if(global.game_timer>=720 || (!global.qa && global.game_timer>60 && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)))) {
+    if(global.game_timer>=720 || (!global.qa && global.game_timer>60 && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter)||scr_gamepad_confirm_pressed()))) {
         global.game_state="play";global.game_timer=0;
         scr_screen_music("play");
     }
@@ -87,6 +92,49 @@ if(global.game_state=="studio") {
     }
     var _mean_y=(_count>0?_sum_y/_count:camera_y+384);
     camera_y=lerp(camera_y,clamp(_mean_y-384,0,room_height-768),0.09);camera_set_view_pos(cam,0,camera_y);
+    // auto-save every 1 minute (3600 frames) and once per difficulty level reached per run
+    global.auto_save_timer--;
+    var _save_now=false;
+    if(global.auto_save_timer<=0){_save_now=true;global.auto_save_timer=3600;}
+    var _cur_level=(altitude>=0.75?3:(altitude>=0.5?2:(altitude>=0.25?1:0)));
+    if(_cur_level>0 && !global.level_saved[_cur_level]) {
+        global.level_saved[_cur_level]=true;
+        _save_now=true;
+    }
+    if(_save_now && !global.qa) scr_save_game(_p1,_p2);
+    // height-based enemy spawning
+    if(!global.qa) {
+        var _alt=altitude;
+        // count entities on camera
+        var _ent_count=instance_number(obj_slime)+instance_number(obj_skeleton)+instance_number(obj_devil)+instance_number(obj_enemy_flying)+instance_number(obj_meteor_enemy);
+        var _cam_top=camera_y; var _cam_bot=camera_y+768;
+        // Level 1 (altitude 0-0.25): slime only
+        if(_alt<0.25 && _ent_count<3) {
+            if(irandom(200)==0) instance_create_layer(irandom_range(100,room_width-100),scr_floor_y()-200,"Instances_1",obj_slime);
+        }
+        // Level 2 (0.25-0.5): slime + skeleton
+        if(_alt>=0.25 && _alt<0.5 && _ent_count<4) {
+            if(irandom(220)==0) instance_create_layer(irandom_range(100,room_width-100),scr_floor_y()-300,"Instances_1",obj_slime);
+            if(irandom(300)==0) instance_create_layer(irandom_range(100,room_width-100),scr_floor_y()-400,"Instances_1",obj_skeleton);
+        }
+        // Level 3 (0.5-0.75): no slime, meteors + skeletons
+        if(_alt>=0.5 && _alt<0.75 && _ent_count<4) {
+            if(irandom(250)==0) instance_create_layer(irandom_range(100,room_width-100),camera_y-60,"Instances_1",obj_meteor_enemy);
+            if(irandom(300)==0) instance_create_layer(irandom_range(100,room_width-100),scr_floor_y()-500,"Instances_1",obj_skeleton);
+        }
+        // Level 4 (0.75+): devils, skeletons, meteors. Max 5 entities.
+        if(_alt>=0.75 && _ent_count<5) {
+            if(irandom(200)==0) instance_create_layer(irandom_range(100,room_width-100),camera_y-60,"Instances_1",obj_meteor_enemy);
+            if(irandom(280)==0) instance_create_layer(irandom_range(100,room_width-100),scr_floor_y()-500,"Instances_1",obj_skeleton);
+            if(irandom(320)==0) instance_create_layer(irandom_range(100,room_width-100),camera_y-100,"Instances_1",obj_devil);
+        }
+        // Cleanup entities far below camera
+        with(obj_slime) { if(y > other.camera_y + 900) instance_destroy(); }
+        with(obj_skeleton) { if(y > other.camera_y + 900) instance_destroy(); }
+        with(obj_devil) { if(y > other.camera_y + 900) instance_destroy(); }
+        with(obj_enemy_flying) { if(y > other.camera_y + 900) instance_destroy(); }
+        with(obj_meteor_enemy) { if(y > other.camera_y + 900) instance_destroy(); }
+    }
     // respawn management
     for(var _di=0;_di<2;_di++) {
         var _dp=(_di==0?_p1:_p2);
@@ -172,7 +220,7 @@ if(global.game_state=="studio") {
        ((global.qa_skip_ending && ending_timer==100) || (!global.qa && (keyboard_check_pressed(ord("E"))||keyboard_check_pressed(vk_enter))))) {
         ending_timer=4600;scr_cut_voice_stop();
     }
-    if(ending_timer>=4780 && (keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up)||global.qa)) {
+    if(ending_timer>=4780 && (keyboard_check_pressed(ord("W"))||keyboard_check_pressed(vk_up)||scr_gamepad_confirm_pressed()||global.qa)) {
         if(global.qa) {global.qa_result=scr_qa_summary(_p1,_p2);global.qa_restart_pending=true;}
         scr_return_to_title();exit;
     }

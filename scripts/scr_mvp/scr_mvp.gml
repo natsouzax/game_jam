@@ -89,6 +89,53 @@ function scr_remove_random_blocks(_max_remove=10) {
     for(var _n=0;_n<array_length(_removed);_n++) _valid=_valid && !instance_exists(_removed[_n]);
     return {removed:array_length(_removed),scope_ok:_valid};
 }
+function scr_is_spawn_obstructed(_tx, _ty) {
+    if (_tx < 32 || _tx > room_width - 32) return true;
+    // Check if the player's body AABB overlaps any solid block (including constructed blocks).
+    if (scr_world_aabb_solid(_tx - body_half_width, _ty - body_height, _tx + body_half_width, _ty, true)) return true;
+    // Also avoid spawning directly over the central void when at or below floor level.
+    if (_ty >= scr_floor_y() && _tx > 540 - body_half_width && _tx < 826 + body_half_width) return true;
+    return false;
+}
+function scr_find_unobstructed_spawn(_pref_x, _pref_y, _cam_top, _cam_bottom) {
+    var _min_y = _cam_top + body_height + 4;
+    var _max_y = _cam_bottom - 4;
+    var _cx = clamp(_pref_x, 32, room_width - 32);
+    var _cy = clamp(_pref_y, _min_y, _max_y);
+    if (!scr_is_spawn_obstructed(_cx, _cy)) return [_cx, _cy];
+    // 1. Try stepping upward above any stacked blocks at the same X column.
+    for (var _up = 1; _up <= 8; _up++) {
+        var _uy = _cy - _up * 64;
+        if (_uy < _min_y) break;
+        if (!scr_is_spawn_obstructed(_cx, _uy) && scr_world_aabb_solid(_cx - body_half_width, _uy, _cx + body_half_width, _uy + 4)) {
+            return [_cx, _uy];
+        }
+    }
+    // 2. Search outward horizontally and across vertical offsets for a supported, unobstructed spot.
+    for (var _dx_step = 1; _dx_step <= 20; _dx_step++) {
+        for (var _side = -1; _side <= 1; _side += 2) {
+            var _tx = _cx + _side * _dx_step * 32;
+            if (_tx < 32 || _tx > room_width - 32) continue;
+            for (var _dy_step = 0; _dy_step <= 6; _dy_step++) {
+                var _ty = clamp(_cy - _dy_step * 64, _min_y, _max_y);
+                if (!scr_is_spawn_obstructed(_tx, _ty) && scr_world_aabb_solid(_tx - body_half_width, _ty, _tx + body_half_width, _ty + 4)) {
+                    return [_tx, _ty];
+                }
+            }
+        }
+    }
+    // 3. Fallback: any unobstructed position inside the camera view.
+    for (var _fx_step = 0; _fx_step <= 20; _fx_step++) {
+        for (var _fside = -1; _fside <= 1; _fside += 2) {
+            var _ftx = clamp(_cx + _fside * _fx_step * 32, 32, room_width - 32);
+            for (var _fdy = 0; _fdy <= 8; _fdy++) {
+                var _fty = clamp(_cy - _fdy * 48, _min_y, _max_y);
+                if (!scr_is_spawn_obstructed(_ftx, _fty)) return [_ftx, _fty];
+            }
+        }
+    }
+    return [_cx, _cy];
+}
 function scr_player_recover() {
     var _stock_before=material_count;
     // Taking non-lethal damage does not remove or alter any constructed blocks.
@@ -106,6 +153,11 @@ function scr_player_recover() {
     }
     x=clamp(x,32,room_width-32);
     y=clamp(y,_cam_top+body_height+4,_cam_bottom-4);
+    if (scr_is_spawn_obstructed(x, y)) {
+        var _safe_spawn=scr_find_unobstructed_spawn(x, y, _cam_top, _cam_bottom);
+        x=_safe_spawn[0]; y=_safe_spawn[1];
+        respawn_x=x; respawn_y=y;
+    }
     vy=0; grounded=scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
     charge=0; _hthrust=0; _jump_was_held=false; _charge_dir=0; jump_held=false; _hjump_cooldown=0;
     jump_rising=false; jump_hold_frames=0;
@@ -129,7 +181,66 @@ function scr_player_die() {
         scr_begin_gameover();
     }
 }
-// Full-dash signature move: cyan cuts down enemies in front, amber sweeps resources like a magnet.
+// Computes the exact grid cell {bx, by, valid} for block placement and preview.
+// - On ground: places in front of the player (if the cell below/in front is empty and supported,
+//   or at the player's level / 1 block above, within 2 blocks horizontally and vertically).
+// - Airborne (jumping): places underneath the player on top of the highest supported surface within 2 blocks.
+// - Requires solid support directly underneath (no floating blocks).
+function scr_get_build_target() {
+    var _cur_col=floor(x/64)*64;
+    var _foot_row=floor((y+4)/64)*64;
+    var _other_player=instance_find((player_number==0?obj_player_p2:obj_player_p1),0);
+    var _bx=_cur_col;
+    var _by=_foot_row-64;
+    if (grounded) {
+        // Check 1 block in front first, then 2 blocks in front (max 2 blocks horizontal range).
+        var _found=false;
+        for (var _step_x=1;_step_x<=2;_step_x++) {
+            var _cand_x=_cur_col+facing*_step_x*64;
+            if (_cand_x<64 || _cand_x+64>room_width-64) continue;
+            // Check from 1 block below the feet level (_foot_row, i.e. ground below and in front)
+            // up to 2 blocks above (_foot_row-128).
+            var _candidate_rows=[_foot_row+64,_foot_row,_foot_row-64,_foot_row-128];
+            for (var _ri=0;_ri<array_length(_candidate_rows);_ri++) {
+                var _cand_y=_candidate_rows[_ri];
+                if (_cand_y<64 || _cand_y+64>room_height) continue;
+                if (abs((_cand_y+32)-(y-32))>128) continue;
+                var _empty=!scr_world_aabb_solid(_cand_x+2,_cand_y+2,_cand_x+62,_cand_y+62);
+                var _sup=scr_world_aabb_solid(_cand_x+4,_cand_y+64,_cand_x+60,_cand_y+66);
+                if (_empty && _sup) {
+                    _bx=_cand_x; _by=_cand_y; _found=true; break;
+                }
+            }
+            if (_found) break;
+        }
+        if (!_found) {
+            _bx=clamp(_cur_col+facing*64,64,room_width-128);
+            _by=clamp(_foot_row-64,64,room_height-64);
+        }
+    } else {
+        // Jumping: only place underneath the character, within 2 blocks (128px) downward.
+        _bx=clamp(_cur_col,64,room_width-128);
+        var _start_row=ceil((y-2)/64)*64;
+        _by=clamp(_start_row,64,room_height-64);
+        for (var _drop=0;_drop<=2;_drop++) {
+            var _cand_y=_start_row+_drop*64;
+            if (_cand_y<64 || _cand_y+64>room_height) continue;
+            if (abs((_cand_y+32)-(y-32))>128) continue;
+            var _empty=!scr_world_aabb_solid(_bx+2,_cand_y+2,_bx+62,_cand_y+62);
+            var _sup=scr_world_aabb_solid(_bx+4,_cand_y+64,_bx+60,_cand_y+66);
+            if (_empty && _sup) {
+                _by=_cand_y; break;
+            }
+        }
+    }
+    var _supported=scr_world_aabb_solid(_bx+4,_by+64,_bx+60,_by+66);
+    var _within_range=(abs((_bx+32)-x)<=128+32 && abs((_by+32)-(y-32))<=128);
+    var _occupied_self=(x+14>_bx && x-14<_bx+64 && y>_by+2 && y-body_height<_by+62);
+    var _occupied_partner=(_other_player!=noone && _other_player.active_player && _other_player.x+16>_bx && _other_player.x-16<_bx+64 && _other_player.y>_by && _other_player.y-70<_by+64);
+    var _free=!scr_world_aabb_solid(_bx+2,_by+2,_bx+62,_by+62);
+    var _valid=(_bx>=64 && _bx+64<=room_width-64 && _by>=64 && _by+64<=room_height && _supported && _within_range && _free && !_occupied_self && !_occupied_partner);
+    return {bx:_bx,by:_by,valid:_valid,supported:_supported,within_range:_within_range};
+}
 function scr_player_dash_ability(_from_x) {
     if (_hthrust<=0) return;
     var _left=min(_from_x,x)-body_half_width-6;
@@ -139,8 +250,9 @@ function scr_player_dash_ability(_from_x) {
         if (_hdir>0) _right+=_reach; else _left-=_reach;
         var _top=y-body_height-8;var _bottom=y+8;
         var _kills=0;
-        for (var _kind=0;_kind<2;_kind++) {
-            var _obj=(_kind==0?obj_enemy:obj_enemy_flying);
+        var _enemy_types=[obj_enemy,obj_enemy_flying,obj_slime,obj_skeleton,obj_devil,obj_meteor_enemy,obj_meteor];
+        for (var _kind=0;_kind<array_length(_enemy_types);_kind++) {
+            var _obj=_enemy_types[_kind];
             for (var _i=instance_number(_obj)-1;_i>=0;_i--) {
                 var _e=instance_find(_obj,_i);
                 if (_e!=noone && _e.x>_left && _e.x<_right && _e.y>_top && _e.y<_bottom) {
@@ -244,13 +356,10 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
     if (_m != noone && abs(_m.x-x)<40 && _m.y+18>y-body_height && _m.y-18<y) {
         material_count++; collected_total++; instance_destroy(_m); scr_sfx(sfx_collect, 0.03);
     }
-    if (_build && material_count > 0 && !grounded) {
-        var _bx = floor(x/64)*64;
-        var _by = ceil(y/64)*64;
-        var _other_player = instance_find((player_number==0 ? obj_player_p2 : obj_player_p1),0);
-        var _occupied_by_partner = (_other_player != noone && _other_player.active_player && _other_player.x+16>_bx && _other_player.x-16<_bx+64 && _other_player.y>_by && _other_player.y-70<_by+64);
-        if (_bx>=64 && _bx+64<=room_width-64 && _by>=64 && _by+64<=room_height && !_occupied_by_partner && !scr_world_aabb_solid(_bx,_by,_bx+64,_by+64)) {
-            var _new_block=instance_create_layer(_bx,_by,"Instances_1",obj_build_block);
+    if (_build && material_count > 0) {
+        var _target = scr_get_build_target();
+        if (_target.valid) {
+            var _new_block=instance_create_layer(_target.bx,_target.by,"Instances_1",obj_build_block);
             _new_block.builder_number=player_number;
             material_count--; built_total++; scr_sfx(sfx_block, 0.05);
         }
@@ -349,6 +458,22 @@ function scr_player_render(_index) {
             draw_triangle(_bx+_bw-9,_by+_bh/2,_bx+_bw-17,_by+5,_bx+_bw-17,_by+_bh-5,false);
         }
         draw_set_color(c_white);
+    }
+    // Placement preview: show where the next block will be placed, in each player's color.
+    if (global.game_state == "play") {
+        var _preview = scr_get_build_target();
+        var _px = _preview.bx;
+        var _py = _preview.by;
+        var _pcol = (player_number==0 ? make_color_rgb(80,220,215) : make_color_rgb(247,181,77));
+        var _can_place = (_preview.valid && material_count > 0);
+        draw_set_alpha(_can_place ? 0.32 : 0.14);
+        draw_set_color(_preview.valid ? _pcol : make_color_rgb(215,85,85));
+        draw_rectangle(_px,_py,_px+63,_py+63,false);
+        draw_set_alpha(_can_place ? 0.85 : 0.42);
+        draw_set_color(_pcol);
+        draw_rectangle(_px,_py,_px+63,_py+63,true);
+        draw_rectangle(_px+2,_py+2,_px+61,_py+61,true);
+        draw_set_alpha(1);
     }
     for(var _j=0;_j<min(material_count,8);_j++) {
         var _ix=x+(_j-(min(material_count,8)-1)/2)*9;
