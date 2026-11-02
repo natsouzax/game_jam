@@ -7,3 +7,4 @@ spawn_timer=irandom_range(180,300);
 phase=0;
 depth=-4;
 home_y=y;
+scr_sfx(sfx_meteor_fall,0.07,0.55);

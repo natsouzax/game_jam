@@ -1,4 +1,4 @@
-hp=2;
+hp=1;
 state=0;
 attack_timer=irandom_range(240,420);
 target=noone;

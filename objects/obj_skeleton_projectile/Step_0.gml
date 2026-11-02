@@ -6,7 +6,7 @@ x+=vx;y+=vy;
 for(var _i=0;_i<2;_i++) {
     var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
     if(_p==noone || !_p.active_player || _p.dead || _p.invulnerable>0) continue;
-    if(point_distance(x,y,_p.x,_p.y-35)<14) {
+    if(point_distance(x,y,_p.x,_p.y-35)<22) {
         with(_p){enemy_hits++;scr_player_die();}
         instance_destroy();exit;
     }

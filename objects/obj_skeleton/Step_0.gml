@@ -1,47 +1,56 @@
 if(global.game_state!="play")exit;
-var _p1=instance_find(obj_player_p1,0);var _p2=instance_find(obj_player_p2,0);
-if(_p1==noone || _p2==noone)exit;
+// Only act while its platform is on screen.
+var _cam_y=camera_get_view_y(view_camera[0]);
+if(y<_cam_y-40 || y>_cam_y+768+80)exit;
 phase+=0.04;
-teleport_timer=max(0,teleport_timer-1);
-shoot_timer=max(0,shoot_timer-1);
-// teleport far from both players
-if(teleport_timer<=0) {
-    var _best_x=room_width/2; var _best_y=scr_floor_y()-200; var _best_d=0;
-    // find a spot far from both players
-    for(var _t=0;_t<20;_t++) {
-        var _cx=irandom_range(80,room_width-80);
-        var _cy=irandom_range(80,scr_floor_y()-80);
-        var _d1=point_distance(_cx,_cy,_p1.x,_p1.y);
-        var _d2=point_distance(_cx,_cy,_p2.x,_p2.y);
-        var _mind=min(_d1,_d2);
-        if(_mind>_best_d){_best_d=_mind;_best_x=_cx;_best_y=_cy;}
-    }
-    x=_best_x; y=_best_y;
-    teleport_timer=irandom_range(600,900);
-    scr_sfx(sfx_hit,0.03);
-}
-// shoot projectile toward nearest player
-if(shoot_timer<=0) {
-    var _target=instance_find((_p1.active_player && (point_distance(x,y,_p1.x,_p1.y)<point_distance(x,y,_p2.x,_p2.y))?obj_player_p1:obj_player_p2),0);
-    if(_target!=noone && _target.active_player && !_target.dead) {
-        var _dir=point_direction(x,y,_target.x,_target.y-35);
-        var _proj=instance_create_layer(x,y,"Instances_1",obj_skeleton_projectile);
-        _proj.vx=lengthdir_x(projectile_speed,_dir);
-        _proj.vy=lengthdir_y(projectile_speed,_dir);
-        _proj.owner=id;
-        shoot_timer=irandom_range(90,150);
-    }
-}
-// collision with players (stomp or damage)
+// nearest living player
+var _target=noone;var _best_d=100000;
 for(var _i=0;_i<2;_i++) {
-    var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
-    if(_p==noone || !_p.active_player || _p.dead || _p.invulnerable>0) continue;
-    if(point_distance(x,y,_p.x,_p.y-35)<28) {
-        if(_p.vy>0 && (_p.y-35)<y && abs(_p.x-x)<22) {
-            hp--;_p.vy=_p.jump_speed;_p.invulnerable=10;scr_sfx(sfx_hit,0.04);
-            if(hp<=0) instance_destroy();
-        } else {
-            with(_p){enemy_hits++;scr_player_die();}
+    var _tp=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
+    if(_tp==noone || !_tp.active_player || _tp.dead) continue;
+    var _d=point_distance(x,y-50,_tp.x,_tp.y-35);
+    if(_d<_best_d){_best_d=_d;_target=_tp;}
+}
+if(state==0) {
+    if(anim_t==0) scr_sfx(sfx_skel_spawn,0.03,0.7);
+    anim_t++;
+    if(anim_t>=36){state=1;anim_t=0;}
+} else {
+    if(_target!=noone) face=(_target.x>=x?1:-1);
+    if(state==1) {
+        anim_t++;
+        shoot_timer--;
+        if(shoot_timer<=0) {
+            if(_target!=noone && _best_d<600) {state=2;cast_t=0;scr_sfx(sfx_skel_charge,0.03,0.6);}
+            else shoot_timer=30;
+        }
+    } else {
+        cast_t++;
+        // Hand glow (18 f), arm out (12 f), release, follow-through.
+        if(cast_t==30 && _target!=noone) {
+            var _hx=x+face*35;var _hy=y-56;
+            var _dir=point_direction(_hx,_hy,_target.x,_target.y-35);
+            var _proj=instance_create_layer(_hx,_hy,"Instances_1",obj_skeleton_projectile);
+            _proj.vx=lengthdir_x(projectile_speed,_dir);
+            _proj.vy=lengthdir_y(projectile_speed,_dir);
+            _proj.owner=id;
+            scr_sfx(sfx_skel_shoot,0.05,0.8);
+        }
+        if(cast_t>=44){state=1;anim_t=0;shoot_timer=irandom_range(60,100);}
+    }
+    // collision with players (stomp or damage)
+    for(var _j=0;_j<2;_j++) {
+        var _p=instance_find((_j==0?obj_player_p1:obj_player_p2),0);
+        if(_p==noone || !_p.active_player || _p.dead || _p.invulnerable>0) continue;
+        if(_p.player_number==0 && _p._hthrust>0) continue;
+        // Contact box: wide enough that visibly touching the skeleton always hurts (player half-width 16 + ~24 for the body).
+        if(abs(_p.x-x)<40 && _p.y>y-84 && _p.y-70<y+6) {
+            if(_p.vy>=0 && _p.y<y-44) {
+                hp--;_p.vy=_p.jump_speed;_p.invulnerable=10;scr_sfx(sfx_hit,0.04);
+                if(hp<=0) { _p.material_count++; scr_sfx(sfx_skel_die,0.05); instance_destroy(); exit; }
+            } else {
+                with(_p){enemy_hits++;scr_player_die();}
+            }
         }
     }
 }

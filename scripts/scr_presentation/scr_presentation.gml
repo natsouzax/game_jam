@@ -515,6 +515,18 @@ function scr_draw_ending(_t) {
         draw_text_transformed(683,360,"TOGETHER",_ts,_ts,0);
         if(_t>=4630)scr_cut_plant(683,486,6+30*scr_cut_ease((_t-4640)/100),0.5*scr_cut_ease((_t-4640)/100));
         draw_set_alpha(1);
+        // Return-to-menu button (appears once the title card has settled).
+        var _bt=clamp((_t-4660)/50,0,1);
+        if(_bt>0) {
+            var _hv=point_in_rectangle(device_mouse_x_to_gui(0),device_mouse_y_to_gui(0),543,616,823,684);
+            draw_set_alpha(_bt);
+            scr_ui_panel(543,616,823,684,true);
+            draw_set_color(_hv?make_color_rgb(255,236,180):make_color_rgb(245,224,166));
+            draw_text_transformed(683,650,"VOLTAR AO MENU",1.1,1.1,0);
+            draw_set_alpha(_bt*0.7);draw_set_color(make_color_rgb(170,184,190));
+            draw_text_transformed(683,712,"Enter / E / W  ou botao A do controle",0.6,0.6,0);
+            draw_set_alpha(1);
+        }
         draw_set_halign(fa_left);draw_set_valign(fa_top);
     }
     draw_set_color(c_white);draw_set_alpha(1);
@@ -559,11 +571,25 @@ function scr_load_game() {
     var _f=file_text_open_read("save.json");
     var _s=file_text_read_string(_f);
     file_text_close(_f);
-    var _d=json_parse(_s);
+    var _d=undefined;
+    try { _d=json_parse(_s); } catch(_e) { _d=undefined; }
+    if (!is_struct(_d)) { scr_sfx(sfx_ui_back); return; }
+    if (variable_struct_exists(_d,"player_count")) global.player_count=clamp(_d.player_count,1,2);
+    if (variable_struct_exists(_d,"solo_character")) global.solo_character=clamp(_d.solo_character,0,1);
+    global.menu_mode=(global.player_count==1?0:1);
+    global.last_solo_character=global.solo_character;
+    global.level_saved=[false,false,false,false];
+    if (variable_struct_exists(_d,"level_saved") && is_array(_d.level_saved) && array_length(_d.level_saved)>=4) global.level_saved=_d.level_saved;
+    // Fresh run state: nothing from the previous session may leak into the loaded game.
     global.game_state="play"; global.game_timer=0;
-    if (variable_struct_exists(_d,"player_count")) global.player_count=_d.player_count;
-    if (variable_struct_exists(_d,"solo_character")) global.solo_character=_d.solo_character;
-    if (variable_struct_exists(_d,"level_saved") && is_array(_d.level_saved)) global.level_saved=_d.level_saved;
+    global.menu_stage=0;
+    global.retry_pending=false;
+    global.death_window_timer=0;
+    global.auto_save_timer=3600;
+    global.intro_seen=[true,true,true];
+    scr_audio_silence();
+    var _clear=[obj_enemy,obj_enemy_flying,obj_slime,obj_skeleton,obj_devil,obj_meteor_enemy,obj_meteor];
+    for(var _ci=0;_ci<array_length(_clear);_ci++) instance_destroy(_clear[_ci]);
     for(var _bi=instance_number(obj_build_block)-1;_bi>=0;_bi--) {
         var _old_b=instance_find(obj_build_block,_bi);
         if(_old_b!=noone && !_old_b.is_checkpoint) instance_destroy(_old_b);
@@ -571,28 +597,35 @@ function scr_load_game() {
     if (variable_struct_exists(_d,"blocks") && is_array(_d.blocks)) {
         for(var _k=0;_k<array_length(_d.blocks);_k++) {
             var _bd=_d.blocks[_k];
+            if(!is_struct(_bd) || !variable_struct_exists(_bd,"x") || !variable_struct_exists(_bd,"y")) continue;
             var _nb=instance_create_layer(_bd.x,_bd.y,"Instances_1",obj_build_block);
-            _nb.builder_number=_bd.builder;
+            _nb.builder_number=(variable_struct_exists(_bd,"builder")?_bd.builder:0);
         }
     }
-    var _p1=instance_find(obj_player_p1,0); var _p2=instance_find(obj_player_p2,0);
-    if (_p1!=noone) {
-        _p1.active_player=(global.player_count==2 || global.solo_character==0);
-        _p1.dead=false;
-        if (variable_struct_exists(_d,"p1x")) { _p1.x=_d.p1x; _p1.y=_d.p1y; _p1.respawn_x=_d.p1x; _p1.respawn_y=_d.p1y; }
-        if (variable_struct_exists(_d,"p1stock")) _p1.material_count=_d.p1stock;
-        if (variable_struct_exists(_d,"p1lives")) _p1.player_lives=max(1,_d.p1lives);
-    }
-    if (_p2!=noone) {
-        _p2.active_player=(global.player_count==2 || global.solo_character==1);
-        _p2.dead=false;
-        if (variable_struct_exists(_d,"p2x")) { _p2.x=_d.p2x; _p2.y=_d.p2y; _p2.respawn_x=_d.p2x; _p2.respawn_y=_d.p2y; }
-        if (variable_struct_exists(_d,"p2stock")) _p2.material_count=_d.p2stock;
-        if (variable_struct_exists(_d,"p2lives")) _p2.player_lives=max(1,_d.p2lives);
-    }
     var _g=instance_find(obj_game,0);
-    if (_g!=noone && variable_struct_exists(_d,"camera_y")) { _g.camera_y=_d.camera_y; camera_set_view_pos(_g.cam,0,_g.camera_y); }
-    if (variable_struct_exists(_d,"altitude")) global.last_save_altitude=_d.altitude;
+    for(var _i=0;_i<2;_i++) {
+        var _p=instance_find((_i==0?obj_player_p1:obj_player_p2),0);
+        if(_p==noone) continue;
+        var _k=(_i==0?"p1":"p2");
+        _p.active_player=(global.player_count==2 || global.solo_character==_i);
+        _p.dead=false;
+        _p.respawn_timer=0;
+        _p.vy=0;_p.grounded=false;
+        _p.invulnerable=120;
+        _p.charge=0;_p._hthrust=0;_p._jump_was_held=false;_p._charge_dir=0;_p.jump_held=false;
+        _p.qa_target=noone;_p.last_support=noone;_p.last_move=0;
+        if (variable_struct_exists(_d,_k+"x")) {
+            _p.x=variable_struct_get(_d,_k+"x");_p.y=variable_struct_get(_d,_k+"y");
+            _p.respawn_x=_p.x;_p.respawn_y=_p.y;
+        }
+        if (variable_struct_exists(_d,_k+"stock")) _p.material_count=variable_struct_get(_d,_k+"stock");
+        _p.player_lives=(variable_struct_exists(_d,_k+"lives")?max(1,variable_struct_get(_d,_k+"lives")):3);
+    }
+    if (_g!=noone) {
+        _g.camera_y=(variable_struct_exists(_d,"camera_y")?_d.camera_y:room_height-768);
+        camera_set_view_pos(_g.cam,0,_g.camera_y);
+    }
+    global.last_save_altitude=(variable_struct_exists(_d,"altitude")?_d.altitude:0);
     scr_screen_music("play");
     scr_sfx(sfx_ui_confirm);
 }
@@ -726,11 +759,31 @@ function scr_gamepad_first() {
     for (var _g=0; _g<12; _g++) if (gamepad_is_connected(_g)) return _g;
     return -1;
 }
+function scr_gamepad_start_pressed() {
+    for (var _g=0; _g<12; _g++) if (gamepad_is_connected(_g) && gamepad_button_check_pressed(_g,gp_start)) return true;
+    return false;
+}
+// Start on any connected controller toggles god mode.
+function scr_gamepad_god_pressed() {
+    for (var _g=0; _g<12; _g++) if (gamepad_is_connected(_g) && gamepad_button_check_pressed(_g,gp_start)) return true;
+    return false;
+}
+// Select / Share pauses during play (Start is the god-mode button).
+function scr_gamepad_pause_pressed() {
+    for (var _g=0; _g<12; _g++) if (gamepad_is_connected(_g) && gamepad_button_check_pressed(_g,gp_select)) return true;
+    return false;
+}
+function scr_gamepad_nth(_n) {
+    var _c=0;
+    for (var _g=0; _g<12; _g++) if (gamepad_is_connected(_g)) { if (_c==_n) return _g; _c++; }
+    return -1;
+}
 function scr_gamepad_for_player(_player_number) {
-    // One controller is assigned to P2 in co-op, or to the chosen solo character.
-    if (global.player_count==2 && _player_number!=1) return -1;
-    if (global.player_count==1 && _player_number!=global.solo_character) return -1;
-    return scr_gamepad_first();
+    // Solo: the first controller drives the chosen character.
+    if (global.player_count==1) return (_player_number==global.solo_character ? scr_gamepad_first() : -1);
+    // Co-op: two controllers -> first is P1, second is P2. One controller -> it drives P2 (P1 keeps the keyboard).
+    if (scr_gamepad_nth(1)>=0) return scr_gamepad_nth(_player_number==0?0:1);
+    return (_player_number==1 ? scr_gamepad_first() : -1);
 }
 function scr_gamepad_is_ps_layout(_gp) {
     var _d = gamepad_get_description(_gp);
@@ -747,21 +800,26 @@ function scr_gamepad_build_btn(_gp) { return gp_shoulderrb; }
 function scr_gamepad_break_btn(_gp) { return gp_shoulderlb; }
 function scr_gamepad_back_btn(_gp) { return gp_face2; }
 function scr_gamepad_menu_input() {
-    var _gp = scr_gamepad_first();
-    if (_gp < 0) {
+    // Any connected controller can drive the menus (so either player can use theirs).
+    var _any=false,_l=false,_r=false,_u=false,_d=false,_c=false,_b=false;
+    for (var _g=0; _g<12; _g++) {
+        if (!gamepad_is_connected(_g)) continue;
+        _any=true;
+        var _ax = gamepad_axis_value(_g, gp_axislh);
+        var _ay = gamepad_axis_value(_g, gp_axislv);
+        _l = _l || gamepad_button_check(_g, gp_padl) || (_ax < -0.6);
+        _r = _r || gamepad_button_check(_g, gp_padr) || (_ax > 0.6);
+        _u = _u || gamepad_button_check(_g, gp_padu) || (_ay < -0.6);
+        _d = _d || gamepad_button_check(_g, gp_padd) || (_ay > 0.6);
+        _c = _c || gamepad_button_check(_g, gp_face1);
+        _b = _b || gamepad_button_check(_g, gp_face2);
+    }
+    if (!_any) {
         global.gp_prev_l=false; global.gp_prev_r=false;
         global.gp_prev_u=false; global.gp_prev_d=false;
         global.gp_prev_c=false; global.gp_prev_b=false;
         return [0,false,false,0];
     }
-    var _ax = gamepad_axis_value(_gp, gp_axislh);
-    var _ay = gamepad_axis_value(_gp, gp_axislv);
-    var _l = gamepad_button_check(_gp, gp_padl) || (_ax < -0.6);
-    var _r = gamepad_button_check(_gp, gp_padr) || (_ax > 0.6);
-    var _u = gamepad_button_check(_gp, gp_padu) || (_ay < -0.6);
-    var _d = gamepad_button_check(_gp, gp_padd) || (_ay > 0.6);
-    var _c = gamepad_button_check(_gp, gp_face1);
-    var _b = gamepad_button_check(_gp, gp_face2);
     var _dir = 0;
     if (_l && !global.gp_prev_l) _dir = -1;
     if (_r && !global.gp_prev_r) _dir = 1;
@@ -822,6 +880,7 @@ function scr_player_controls() {
         _bl = keyboard_check_pressed(vk_enter);
         _br = keyboard_check_pressed(vk_delete);
     }
+    aim_kb_down = (global.player_count==1 || player_number==0 ? keyboard_check(ord("S")) : keyboard_check(vk_down));
     var _gp = scr_gamepad_for_player(player_number);
     var _use_gp = (_gp >= 0);
     var _aim_x = 0; var _aim_y = 0;
@@ -833,16 +892,33 @@ function scr_player_controls() {
         if (gamepad_button_check(_gp, gp_padr)) _mv = 1;
         var _rx = gamepad_axis_value(_gp, gp_axisrh);
         var _ry = gamepad_axis_value(_gp, gp_axisrv);
-        if (abs(_rx) > 0.5) _aim_x = _rx;
-        if (abs(_ry) > 0.5) _aim_y = _ry;
+        // 360-degree cycle aim: pushing the right stick snaps the build target to the nearest of 8 directions
+        // around the character and it stays locked after release. Pushing the same direction again alternates
+        // between 1 and 2 cells away.
+        var _mag=point_distance(0,0,_rx,_ry);
+        if(_mag>0.6 && !aim_stick_held) {
+            aim_stick_held=true;
+            var _di=round(point_direction(0,0,_rx,_ry)/45) mod 8;
+            if(aim_active && _di==aim_dir) aim_dist=(aim_dist mod 2)+1;
+            else {aim_dir=_di;aim_dist=1;}
+            aim_active=true;
+        }
+        if(_mag<0.3) aim_stick_held=false;
+        var _up_held=gamepad_button_check(_gp,gp_padu) || gamepad_axis_value(_gp,gp_axislv)<-0.6;
+        // While the dash button is held, up/down aim the dash instead of jumping.
+        var _chg_btn=(_jh || gamepad_button_check(_gp,gp_face2));
+        var _down_held=gamepad_button_check(_gp,gp_padd) || gamepad_axis_value(_gp,gp_axislv)>0.6;
+        if(_chg_btn) dash_aim_y=(_up_held?-1:(_down_held?1:0));
+        if(_up_held && !jump_axis_held && !_chg_btn) _jp=true;
+        jump_axis_held=_up_held;
         var _now_jump = gamepad_button_check(_gp, scr_gamepad_jump_btn(_gp));
         if (gamepad_button_check_pressed(_gp, scr_gamepad_jump_btn(_gp))) _jp = true;
-        _jp_hold = _jp_hold || _now_jump;
+        _jp_hold = _jp_hold || _now_jump || (_up_held && !_chg_btn);
         _jh = _jh || gamepad_button_check(_gp, gp_face2);
         if (gamepad_button_check_pressed(_gp, scr_gamepad_build_btn(_gp))) _bl = true;
         if (gamepad_button_check_pressed(_gp, scr_gamepad_break_btn(_gp))) _br = true;
-    }
-    aim_x = _aim_x; aim_y = _aim_y;
+    } else {jump_axis_held=false;dash_aim_y=0;}
+    aim_x = 0; aim_y = 0;
     var _dbg_player = (global.player_count==1 ? global.solo_character : 0);
     if (player_number == _dbg_player) {
         global.dbg_mv = _mv; global.dbg_jp = _jp; global.dbg_jh = _jh; global.dbg_bl = _bl; global.dbg_gp = _gp;
@@ -1135,6 +1211,15 @@ function scr_draw_intro() {
     draw_set_alpha(_fade);draw_set_color(make_color_rgb(12,18,25));draw_rectangle(0,0,1366,768,false);draw_set_alpha(1);draw_set_color(c_white);
 }
 
+function scr_reset_run_progress() {
+    global.level_saved = [false,false,false,false];
+    global.auto_save_timer = 3600;
+    global.last_save_altitude = 0;
+    global.death_window_timer = 0;
+    global.retry_pending = false;
+    global.restart_game = false;
+}
+
 function scr_return_to_title() {
     global.game_state = "title";
     global.menu_stage = 0;
@@ -1142,13 +1227,13 @@ function scr_return_to_title() {
     global.solo_character = 0;
     global.player_count = 2;
     global.game_timer = 0;
-    global.restart_game = false;
-    global.death_window_timer = 0;
+    global.gameover_choice = 0;
+    scr_reset_run_progress();
     scr_gamepad_menu_input();
     scr_cut_voice_stop();
     if(variable_global_exists("cutscene_surface") && surface_exists(global.cutscene_surface))surface_free(global.cutscene_surface);
     scr_music_stop();
-    room_restart();
+    room_goto(Room1);
 }
 
 function scr_begin_gameover() {
@@ -1271,31 +1356,94 @@ function scr_gameover_select(_choice) {
             }
         }
         window_set_cursor(cr_default);
+        scr_reset_run_progress();
+        global.retry_pending=true;
+        room_goto(Room1);
     } else scr_return_to_title();
 }
 
 function scr_draw_gameover() {
-    draw_set_alpha(0.82);
+    var _t=global.gameover_timer;
+    var _in=clamp(_t/24,0,1);
+    var _pulse=0.5+0.5*sin(_t*0.09);
+    // Dim the frozen world, then warm the edges so the screen feels heavy but readable.
+    draw_set_alpha(0.82*_in);
     draw_set_color(make_color_rgb(12, 16, 24));
     draw_rectangle(0, 0, 1366, 768, false);
-    draw_set_alpha(1);
-    scr_actor_pose(0, 1, 500, 390, 96, 1, 0.72);
-    scr_actor_pose(1, 1, 866, 390, 96, -1, 0.72);
+    draw_set_color(make_color_rgb(70,14,22));
+    for(var _v=0;_v<8;_v++) {
+        draw_set_alpha((0.20-_v*0.024)*_in);
+        draw_rectangle(0,_v*14,1366,_v*14+14,false);
+        draw_rectangle(0,768-_v*14-14,1366,768-_v*14,false);
+        draw_rectangle(_v*18,0,_v*18+18,768,false);
+        draw_rectangle(1366-_v*18-18,0,1366-_v*18,768,false);
+    }
+    // Slow embers drifting upward.
+    draw_set_color(make_color_rgb(255,150,80));
+    for(var _e=0;_e<28;_e++) {
+        var _ex=(_e*197+sin(_t*0.012+_e)*26) mod 1366;
+        var _ey=768-((_t*(0.35+(_e mod 5)*0.12)+_e*83) mod 820);
+        draw_set_alpha((0.12+0.14*((_e+_t div 20) mod 3)/2)*_in);
+        draw_circle(_ex,_ey,1+(_e mod 3),false);
+    }
+    draw_set_alpha(_in);
+    // Row of emptied hearts above the pair: the lives that ran out.
+    for(var _h=0;_h<3;_h++) {
+        var _hx=683+(_h-1)*58;var _hy=150+sin(_t*0.05+_h)*3;
+        draw_set_color(make_color_rgb(54,40,48));
+        draw_circle(_hx-8,_hy-5,10,false);draw_circle(_hx+8,_hy-5,10,false);
+        draw_triangle(_hx-18,_hy,_hx+18,_hy,_hx,_hy+19,false);
+        draw_set_color(make_color_rgb(242,90,108));
+        draw_circle(_hx-8,_hy-5,10,true);draw_circle(_hx+8,_hy-5,10,true);
+        draw_line_width(_hx-18,_hy,_hx,_hy+19,2);draw_line_width(_hx+18,_hy,_hx,_hy+19,2);
+        draw_set_color(make_color_rgb(12,16,24));
+        draw_line_width(_hx-2,_hy-12,_hx+3,_hy-3,3);draw_line_width(_hx+3,_hy-3,_hx-3,_hy+5,3);
+        draw_set_color(make_color_rgb(242,90,108));
+        draw_line_width(_hx-2,_hy-12,_hx+3,_hy-3,1);draw_line_width(_hx+3,_hy-3,_hx-3,_hy+5,1);
+    }
+    // Defeated pair with a slight breathing bob and a soft floor shadow.
+    var _bob=sin(_t*0.05)*2;
+    draw_set_alpha(0.35*_in);draw_set_color(c_black);
+    draw_ellipse(500-62,386,500+62,402,false);draw_ellipse(866-62,386,866+62,402,false);
+    draw_set_alpha(_in);
+    scr_actor_pose(0, 1, 500, 390+_bob, 96, 1, 0.72*_in);
+    scr_actor_pose(1, 1, 866, 390-_bob, 96, -1, 0.72*_in);
     // Text-free retry arrow and house: keyboard or mouse selects either panel.
     for(var _i=0;_i<2;_i++) {
         var _r=scr_gameover_button_rect(_i);
-        scr_ui_panel(_r[0],_r[1],_r[2],_r[3],global.gameover_choice==_i);
+        var _sel=(global.gameover_choice==_i);
+        var _lift=(_sel?-4-round(_pulse*2):0);
+        var _slide=round((1-_in)*40);
+        _r[1]+=_lift+_slide;_r[3]+=_lift+_slide;
+        if(_sel) {
+            draw_set_alpha((0.10+0.14*_pulse)*_in);draw_set_color(make_color_rgb(255,214,140));
+            draw_rectangle(_r[0]-10,_r[1]-10,_r[2]+10,_r[3]+10,false);
+            draw_rectangle(_r[0]-5,_r[1]-5,_r[2]+5,_r[3]+5,false);
+            draw_set_alpha(_in);
+        }
+        scr_ui_panel(_r[0],_r[1],_r[2],_r[3],_sel);
         var _cx=(_r[0]+_r[2])/2;var _cy=(_r[1]+_r[3])/2;
-        draw_set_color(make_color_rgb(235,211,157));
+        draw_set_color(_sel?make_color_rgb(255,232,176):make_color_rgb(150,134,104));
         if(_i==0) {
-            draw_circle(_cx,_cy,27,true);
-            draw_triangle(_cx+12,_cy-32,_cx+32,_cy-26,_cx+20,_cy-12,false);
+            // Retry: open ring that slowly turns when selected, with an arrow head at its gap.
+            var _spin=(_sel?_t*3:0);
+            for(var _a=30;_a<=330;_a+=10) {
+                var _x1=_cx+lengthdir_x(27,_a+_spin);var _y1=_cy+lengthdir_y(27,_a+_spin);
+                var _x2=_cx+lengthdir_x(27,_a+10+_spin);var _y2=_cy+lengthdir_y(27,_a+10+_spin);
+                draw_line_width(_x1,_y1,_x2,_y2,3);
+            }
+            var _ax=_cx+lengthdir_x(27,30+_spin);var _ay=_cy+lengthdir_y(27,30+_spin);
+            draw_triangle(_ax+lengthdir_x(10,_spin+120)+lengthdir_x(8,_spin+30),_ay+lengthdir_y(10,_spin+120)+lengthdir_y(8,_spin+30),
+                _ax+lengthdir_x(10,_spin-60)+lengthdir_x(8,_spin+30),_ay+lengthdir_y(10,_spin-60)+lengthdir_y(8,_spin+30),
+                _ax+lengthdir_x(14,_spin+120),_ay+lengthdir_y(14,_spin+120),false);
         } else {
             draw_triangle(_cx-34,_cy-4,_cx,_cy-32,_cx+34,_cy-4,false);
             draw_rectangle(_cx-24,_cy-4,_cx+24,_cy+28,false);
             draw_set_color(make_color_rgb(30,43,51));draw_rectangle(_cx-7,_cy+6,_cx+7,_cy+28,false);
+            if(_sel) {draw_set_color(make_color_rgb(255,214,140));draw_circle(_cx+3,_cy+18,1.5,false);}
         }
     }
+    draw_set_alpha(1);
     draw_set_color(c_white);
 }
 
@@ -1309,12 +1457,12 @@ function scr_blue_enemy_draw(_frame,_x,_y) {
 }
 
 // Four 256 px cells share a baseline; the source already carries transparency.
-function scr_demon_draw(_frame,_x,_y) {
-    static _scale=0.42;
+function scr_demon_draw(_frame,_x,_y,_scale=0.42,_flip=false) {
     var _cell=256;
     var _left=round(_x-140*_scale);
     var _top=round(_y-120*_scale);
-    draw_sprite_part_ext(spr_demon_sheet,0,(_frame mod 4)*_cell,0,_cell,254,_left,_top,_scale,_scale,c_white,1);
+    var _draw_x=(_flip?_left+_cell*_scale:_left);
+    draw_sprite_part_ext(spr_demon_sheet,0,(_frame mod 4)*_cell,0,_cell,254,_draw_x,_top,(_flip?-_scale:_scale),_scale,c_white,1);
 }
 
 // Foreground chasm: the ground strip already carries the bank art, so the void is cut over it in GUI space.
@@ -1473,6 +1621,9 @@ function scr_pause_select(_choice) {
         }
         var _game=instance_find(obj_game,0);
         if(_game!=noone) { _game.camera_y=room_height-768; camera_set_view_pos(_game.cam,0,_game.camera_y); }
+        scr_reset_run_progress();
+        global.retry_pending=true;
+        room_goto(Room1);
         return;
     }
     window_set_cursor(cr_default);
@@ -1483,7 +1634,7 @@ function scr_pause_select(_choice) {
 function scr_pause_input() {
     var _gp_menu=scr_gamepad_menu_input();
     var _pause_gp=scr_gamepad_first();
-    if(_pause_gp>=0 && gamepad_button_check_pressed(_pause_gp,gp_start)) {
+    if(scr_gamepad_start_pressed()) {
         scr_resume_game();
         return;
     }

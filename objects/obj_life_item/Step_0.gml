@@ -11,7 +11,7 @@ for (var _i = 0; _i < 2; _i++) {
     var _p = instance_find((_i == 0 ? obj_player_p1 : obj_player_p2), 0);
     if (_p != noone && _p.active_player && !_p.dead && point_distance(x, y, _p.x, _p.y - 35) < 30) {
         if(!scr_player_gain_life(_p))continue;
-        scr_sfx(sfx_collect, 0.03);
+        scr_sfx(sfx_life_gain, 0.02);
         instance_destroy();
         exit;
     }

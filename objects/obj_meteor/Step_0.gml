@@ -9,7 +9,7 @@ for(var _i=0;_i<2;_i++) {
     if(_p==noone || !_p.active_player || _p.dead || _p.invulnerable>0)continue;
     if(abs(_p.x-x)<radius+14 && _p.y>y-radius && _p.y-_p.body_height<y+radius) {
         _p.enemy_hits++;
-        scr_sfx(sfx_hit,0.05);
+        scr_sfx(sfx_hit,0.05);scr_sfx(sfx_meteor_impact,0.05,0.7);
         with(_p)scr_player_die();
         instance_destroy();
         exit;
@@ -23,8 +23,9 @@ for(var _bi=0;_bi<instance_number(obj_build_block);_bi++) {
     if(_hit_block!=noone && !_hit_block.is_checkpoint && _hit_block.builder_number>=0
        && x+radius>_hit_block.x && x-radius<_hit_block.x+_hit_block.solid_width
        && y+radius>_hit_block.y && y-radius<_hit_block.y+_hit_block.solid_height) {
+        scr_sfx(sfx_meteor_impact,0.08,0.6);
         instance_destroy(_hit_block);
         instance_destroy();exit;
     }
 }
-if(scr_world_aabb_solid(x-radius,y-radius,x+radius,y+radius)) { instance_destroy(); exit; }
+if(scr_world_aabb_solid(x-radius,y-radius,x+radius,y+radius)) { scr_sfx(sfx_meteor_impact,0.08,0.6); instance_destroy(); exit; }

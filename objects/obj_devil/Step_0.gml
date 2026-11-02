@@ -1,5 +1,6 @@
 if (global.game_state != "play") exit;
 hover_phase += 0.06;
+if (floor(hover_phase * 10) mod 18 == 0 && floor((hover_phase - 0.06) * 10) mod 18 != 0) scr_sfx(sfx_devil_flap, 0.08, 0.35);
 attack_timer = max(0, attack_timer - 1);
 
 if (state == 0) {
@@ -24,6 +25,7 @@ if (state == 0) {
             start_y = y;
             attack_progress = 0;
             state = 1;
+            scr_sfx(sfx_devil_dive, 0.06, 0.6);
         } else {
             attack_timer = 60;
         }
@@ -48,13 +50,14 @@ if (state == 0) {
 for (var _i = 0; _i < 2; _i++) {
     var _p = instance_find((_i == 0 ? obj_player_p1 : obj_player_p2), 0);
     if (_p == noone || !_p.active_player || _p.dead || _p.invulnerable > 0) continue;
+    if (_p.player_number == 0 && _p._hthrust > 0) continue;
     if (point_distance(x, y, _p.x, _p.y - 35) < 40) {
-        if (_p.vy > 0 && _p.y < y - 8) {
+        if (_p.vy >= 0 && (_p.y - 35) < y && abs(_p.x - x) < 34) {
             hp--;
             _p.vy = _p.jump_speed;
             _p.invulnerable = 10;
             scr_sfx(sfx_hit, 0.04);
-            if (hp <= 0) { instance_destroy(); exit; }
+            if (hp <= 0) { _p.material_count++; scr_sfx(sfx_devil_die, 0.04); instance_destroy(); exit; }
             state = 0;
             attack_timer = 5 * 60;
             start_x = x;

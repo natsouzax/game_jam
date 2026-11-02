@@ -64,7 +64,7 @@ scr_settings_load();
 if(global.game_state=="studio" || global.game_state=="video")scr_music_stop();
 else scr_screen_music(global.game_state);
 spawn_timer=30;spawn_side=0;ending_timer=0;camera_y=room_height-768;bg_y=camera_y;altitude=0;depth=400;
-enemy_spawn_timer=360;enemy_respawn_queue=[];
+enemy_spawn_timer=60;devil_timer=0;enemy_respawn_queue=[];
 if (!variable_global_exists("gameover_choice")) global.gameover_choice=0;
 if (!variable_global_exists("audio_muted")) global.audio_muted=false;
 global.gameover_timer=0;
@@ -85,24 +85,32 @@ var _rs=instance_create_layer(826,_floor,"Instances_1",obj_world_solid);
 _rs.solid_width=540;_rs.solid_height=128;
 var _room_name=room_get_name(room);
 // A small checkpoint base at each visual altitude band gives the climb a place to regroup.
+skeleton_posts=[];meteor_post_done=false;devil_kills=0;devil_prev=0;ship_prev=0;ships_defeated=false;
 if(_room_name=="Room1") {
-    var _climb_span=max(1,_floor-220);
-    for(var _stage=1;_stage<=3;_stage++) {
-        var _base_y=round(_floor-_climb_span*(_stage*0.25));
+    // 6 intermediate platforms + the top one = 7 levels, evenly spaced (~800 px apart).
+    var _levels=7;
+    var _climb_span=max(1,_floor-260);
+    var _spacing=_climb_span/_levels;
+    global.tower_spacing=_spacing;
+    for(var _stage=1;_stage<_levels;_stage++) {
+        var _base_y=round(_floor-_spacing*_stage);
         var _base_x=(_stage mod 2==1?190:896);
         var _base=instance_create_layer(_base_x,_base_y,"Instances_1",obj_build_block);
         _base.solid_width=280;_base.solid_height=20;_base.is_checkpoint=true;_base.level_id=_stage;
+        // Skeleton mages guard the first three platforms.
+        if(_stage<=3 && !global.qa) {
+            var _sk=instance_create_layer(_base_x+140,_base_y,"Instances_1",obj_skeleton);
+            array_push(skeleton_posts,{x:_base_x+140,y:_base_y,inst:_sk,timer:0});
+        }
     }
-} else if(_room_name=="Room2") {
-    var _final_base=instance_create_layer(543,round(_floor-(_floor-220)*0.5),"Instances_1",obj_build_block);
-    _final_base.solid_width=280;_final_base.solid_height=20;_final_base.is_checkpoint=true;_final_base.level_id=4;
+}
+// Final platform at the top of the tower: the deity waits here. Touching him wins the game.
+if(room_get_name(room)=="Room1") {
+    var _top=instance_create_layer(543,260,"Instances_1",obj_build_block);
+    _top.solid_width=280;_top.solid_height=20;_top.is_checkpoint=true;_top.level_id=7;
+    instance_create_layer(683,260,"Instances_1",obj_god_npc);
 }
 // Enemies are spawned dynamically based on altitude (see Step_0).
-// Only the demon appears in Room2.
-if (_room_name=="Room2") {
-    var _demon=instance_create_layer(683, 640, "Instances_1", obj_demon);
-    if(!global.qa) scr_enemy_apply_difficulty(_demon,0.72);
-}
 display_set_gui_size(1366,768);gpu_set_texfilter(false);
 view_enabled=true;view_visible[0]=true;cam=view_camera[0];camera_set_view_size(cam,1366,768);camera_set_view_pos(cam,0,camera_y);
 // QA-only one-way traversal scaffolding. A normal game never creates these.
@@ -113,3 +121,6 @@ if(global.qa && !global.qa_section_test) {
     }
 }
 window_set_caption("TOGETHER");
+if (!variable_global_exists("god")) global.god=false;
+god_buf="";
+res_acc=0;res_slot=0;tower_levels=7;

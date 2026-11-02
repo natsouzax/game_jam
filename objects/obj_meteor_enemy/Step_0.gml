@@ -8,9 +8,9 @@ y=home_y+sin(phase)*8;
 // spawn foguinhos
 if(spawn_count<max_spawns) {
     spawn_timer--;
-    if(spawn_timer<=0) {
+    if(spawn_timer<=0 && scr_fire_slot_free(y)) {
         var _fg=instance_create_layer(x,y,"Instances_1",obj_enemy_flying);
-        _fg.start_x=x;_fg.start_y=y;_fg.base_y=y+100;
+        _fg.spawn_t=_fg.spawn_total;_fg.start_x=x;_fg.start_y=y;_fg.base_y=y+100;_fg.plat_id=scr_tower_platform(y);_fg.sec_id=scr_tower_section(y);
         spawn_count++;
         spawn_timer=irandom_range(180,300);
     }
@@ -25,9 +25,9 @@ for(var _i=0;_i<2;_i++) {
     if(point_distance(x,y,_p.x,_p.y-35)<28) {
         if(_p.vy>=0 && (_p.y-35)<y && abs(_p.x-x)<22) {
             _p.vy=_p.jump_speed;_p.invulnerable=max(_p.invulnerable,10);
-            if(scr_player_gain_life(_p)) scr_sfx(sfx_collect,0.05);
+            if(scr_player_gain_life(_p)) scr_sfx(sfx_life_gain,0.03);
             else scr_sfx(sfx_hit,0.04);
-            hp=0;instance_destroy();exit;
+            hp=0;_p.material_count++;scr_sfx(sfx_rock_break,0.06);instance_destroy();exit;
         } else if(_p.invulnerable<=0) {
             with(_p){enemy_hits++;scr_player_die();}
         }

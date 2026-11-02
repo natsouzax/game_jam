@@ -1,6 +1,7 @@
 if(global.game_state!="play")exit;
 age++;
-if(age>(landed?2400:3600)){instance_destroy();exit;}
+// A resource vanishes 7 s (420 frames) after it lands; one still falling lasts up to 60 s.
+if(age>(landed?420:3600)){instance_destroy();exit;}
 var _drop_altitude=scr_enemy_altitude();
 gravity_speed=scr_resource_fall_gravity(_drop_altitude);
 fall_max=scr_resource_fall_max(_drop_altitude);

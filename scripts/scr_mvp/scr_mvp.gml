@@ -1,9 +1,11 @@
+#macro PLAYER_FOOT_SINK 4 // px the sprite is drawn below the collision floor so shoes touch the ground art
 #macro DASH_CHARGE_FRAMES 45
 #macro DASH_THRUST 40
 #macro DASH_THRUST_DECAY 1.0
 #macro DOUBLE_JUMP_CHARGE_FRAMES 24
 #macro P2_MAGNET_SCALE 3
 #macro ENEMY_ACTIVE_CAP 2
+#macro MAX_MATERIALS 10
 #macro STAR_STUN_FRAMES 60
 
 function scr_player_init(_index) {
@@ -16,7 +18,7 @@ function scr_player_init(_index) {
     checkpoint_level = 0; depth = -10; qa_jump_cooldown = 0; qa_target=noone;
     player_lives = 3; dead = false; respawn_timer = 0;
     charge = 0; _hthrust = 0; _hdir = 1; _jump_was_held = false; _charge_dir = 0; jump_held = false; _hjump_cooldown = 0;
-    jump_rising = false; jump_hold_frames = 0; jump_key_held=false; jump_double_used=false; double_jump_flash=0;stun_timer=0;aim_x=0;aim_y=0;
+    jump_rising = false; jump_hold_frames = 0; jump_key_held=false; jump_double_used=false; double_jump_flash=0;stun_timer=0;aim_x=0;aim_y=0;dash_aim_y=0;aim_active=false;aim_dir=0;aim_dist=1;aim_stick_held=false;aim_kb_down=false;jump_axis_held=false;
     dash_kills = 0; dash_kill_flash = 0; dash_collects = 0; dash_collect_flash = 0; build_cooldown=0;build_flash=0;build_flash_x=x;build_flash_y=y;
 }
 // Floor sits 128 px above the bottom of the room, so a taller room is more climb.
@@ -57,6 +59,7 @@ function scr_enemy_make(_object,_x,_y,_kind,_difficulty) {
     var _e=instance_create_layer(_x,_y,"Instances_1",_object);
     if(_object==obj_enemy) {
         _e.kind=_kind;_e.home_x=_x;_e.home_y=_y;_e.phase=random(10);_e.fall_t=0;
+        if(_kind==3)scr_sfx(sfx_star_twinkle,0.05,0.55);
         switch(_kind) {
             case 0:
                 _e.walk_dir=(irandom(1)==0?-1:1);_e.patrol_speed=1.4;_e.hit_radius=28;
@@ -85,12 +88,43 @@ function scr_enemy_wave_size(_altitude) {
     if(_d>=0.24 && _d<0.52) return 2;
     return 1;
 }
+// Tower geometry helpers. Platform n sits n*tower_spacing above the floor; section k is the stretch between platform k and k+1.
+function scr_tower_section(_y) {
+    if(!variable_global_exists("tower_spacing")) return 0;
+    return clamp(floor((scr_floor_y()-_y)/global.tower_spacing),0,6);
+}
+function scr_tower_platform(_y) {
+    if(!variable_global_exists("tower_spacing")) return 0;
+    return clamp(round((scr_floor_y()-_y)/global.tower_spacing),0,7);
+}
+// Fire-spawner ships never come back once one has been defeated.
+function scr_spawn_ship(_x,_y) {
+    var _g=instance_find(obj_game,0);
+    if(_g!=noone && _g.ships_defeated) return noone;
+    return instance_create_layer(_x,_y,"Instances_1",obj_meteor_enemy);
+}
+// Fire spirits: at most 3 per platform and 4 per section.
+function scr_fire_slot_free(_y) {
+    var _pid=scr_tower_platform(_y);var _sid=scr_tower_section(_y);
+    var _np=0;var _ns=0;
+    with(obj_enemy_flying) {
+        if(variable_instance_exists(id,"plat_id") && plat_id==_pid) _np++;
+        if(variable_instance_exists(id,"sec_id") && sec_id==_sid) _ns++;
+    }
+    return _np<3 && _ns<4;
+}
 function scr_resource_drop_interval(_altitude) {
     var _d=clamp(_altitude,0,1);
-    return round(lerp(42,18,_d));
+    // Fast at the start, much faster near the top (2 drops/s at the bottom -> ~7 drops/s at the top).
+    // Opening rain is 30% sparser (interval /0.7), easing back to the full rate by 50% altitude.
+    // Overall 10% fewer drops on top of that (interval /0.9).
+    // From platform 3 up, a further 15% fewer drops (interval /0.85).
+    var _p3=(variable_global_exists("tower_spacing") && _d*(scr_floor_y()-220)>=3*global.tower_spacing);
+    return round(lerp(30,9,_d)*lerp(1/0.7,1,clamp(_d/0.5,0,1))/0.9/(_p3?0.85:1));
 }
 function scr_resource_drop_cap(_altitude) {
-    return 8+floor(clamp(_altitude,0,1)*8);
+    var _p3=(variable_global_exists("tower_spacing") && clamp(_altitude,0,1)*(scr_floor_y()-220)>=3*global.tower_spacing);
+    return round((12+floor(clamp(_altitude,0,1)*18))*lerp(0.7,1,clamp(_altitude/0.5,0,1))*0.9*(_p3?0.85:1));
 }
 function scr_resource_fall_gravity(_altitude) {
     return lerp(0.12,0.20,clamp(_altitude,0,1));
@@ -161,7 +195,8 @@ function scr_enemy_director() {
 }
 // Section 0 is ground-to-first-checkpoint; each next section is 192 px high.
 function scr_tower_section_at_y(_top) {
-    return max(0, floor((scr_floor_y() - _top - 1) / 192));
+    var _h=(variable_global_exists("tower_spacing") && !global.qa ? global.tower_spacing : 192);
+    return max(0, floor((scr_floor_y() - _top - 1) / _h));
 }
 function scr_reset_section_blocks(_section) {
     var _remove=[];
@@ -245,15 +280,32 @@ function scr_get_build_target(_move=0,_vertical=0,_aim_x=0,_aim_y=0) {
     var _cell_x=floor(x/64)*64;
     var _under_y=ceil(y/64)*64;
     var _aim_dx=(abs(_aim_x)>0.5?sign(_aim_x)*max(1,round(abs(_aim_x)*2)):0);
-    var _aim_dy=(abs(_aim_y)>0.5?sign(_aim_y)*max(1,round(abs(_aim_y)*2)):0);
+    // Build assist only reaches forward: vertical aiming is ignored.
+    var _aim_dy=0;
     var _bx=_cell_x+_aim_dx*64;
     var _by=_under_y+_aim_dy*64;
     if(grounded) {
-        // On solid ground the cell below is occupied: use the adjacent step as the neutral target.
-        var _ground_row=floor((y+4)/64)*64-64;
-        if(_aim_dx==0 && _aim_dy==0) _bx=_cell_x+facing*64;
-        else if(_aim_dx==0) _bx=_cell_x+facing*64;
+        // Stand on any solid (ground, built block, checkpoint platform) and build on its top face.
+        var _support=scr_world_support_y(x-body_half_width,x+body_half_width,y);
+        var _ground_row=(_support!=noone?_support-64:floor((y+4)/64)*64-64);
+        if(_aim_dx==0) _bx=_cell_x+facing*64;
         _by=_ground_row+_aim_dy*64;
+    }
+    // 360-degree aim (controller): the target is the cell 1-2 steps from the character's own cell in the locked direction.
+    // Holding Down (S / Down arrow) is a dedicated aim option: the cell directly under the character.
+    var _aim_on=(aim_active || aim_kb_down);
+    var _aim_d=(aim_kb_down?6:aim_dir);
+    var _aim_n=(aim_kb_down?1:aim_dist);
+    if(_aim_on) {
+        // Airborne: the cell holding the feet, so aiming straight down targets the cell directly under the character.
+        var _own_row=_under_y-64;
+        if(grounded) {var _sup=scr_world_support_y(x-body_half_width,x+body_half_width,y);if(_sup!=noone)_own_row=_sup-64;}
+        var _adx=round(lengthdir_x(1,_aim_d*45));
+        var _ady=round(lengthdir_y(1,_aim_d*45));
+        _bx=_cell_x+_adx*_aim_n*64;
+        _by=_own_row+_ady*_aim_n*64;
+        // Aiming downward: skip over solid cells (the block you stand on) to reach the free cell underneath it.
+        if(_ady>0) {var _k=0;while(_k<3 && scr_world_aabb_solid(_bx+2,_by+2,_bx+62,_by+62)){_by+=64;_k++;}}
     }
     var _other=instance_find((player_number==0?obj_player_p2:obj_player_p1),0);
     var _within=(abs((_bx+32)-x)<=160 && abs((_by+32)-(y-32))<=160);
@@ -265,11 +317,15 @@ function scr_get_build_target(_move=0,_vertical=0,_aim_x=0,_aim_y=0) {
     var _partner=(_other!=noone && _other.active_player && _other.x+16>_bx && _other.x-16<_bx+64 && _other.y>_by && _other.y-70<_by+64);
     var _free=!scr_world_aabb_solid(_bx+2,_by+2,_bx+62,_by+62);
     var _attached=scr_world_build_is_attached(_bx,_by);
+    // Exception: while airborne, the cell directly under the character's feet is always buildable (jump, then build under yourself).
+    if(!grounded && _bx==_cell_x && _by==_under_y) _attached=true;
+    // Rule: a block can only be built with at least one solid (ground, platform or block) touching its cell, sides, above, below or corner.
     var _in_bounds=(_bx>=64 && _bx+64<=room_width-64 && _by>=64 && _by+64<=room_height);
     var _valid=(_in_bounds && _within && _free && !_self && !_partner && _attached);
     return {bx:_bx,by:_by,valid:_valid,supported:_attached,within_range:_within};
 }
 function scr_player_recover(_clear_section=false) {
+    scr_sfx(sfx_respawn,0.03,0.8);
     var _stock_before=material_count;
     var _reset=(_clear_section?scr_reset_section_blocks(checkpoint_level):{removed:0,scope_ok:true});
     reset_blocks_total+=_reset.removed; section_resets++;
@@ -301,6 +357,7 @@ function scr_player_recover(_clear_section=false) {
 }
 function scr_player_die(_stun_frames=0) {
     if (!active_player || dead) return;
+    scr_sfx(sfx_player_hurt,0.04,0.9);
     player_lives--;
     if (player_lives > 0) {
         if(_stun_frames>0) {
@@ -349,24 +406,34 @@ function scr_player_dash_ability(_from_x) {
     var _left=min(_from_x,x)-body_half_width-6;
     var _right=max(_from_x,x)+body_half_width+6;
     if (player_number==0) {
-        var _reach=26;
+        var _reach=60;
         if (_hdir>0) _right+=_reach; else _left-=_reach;
-        var _top=y-body_height-8;var _bottom=y+8;
-        var _kills=0;
-        var _enemy_types=[obj_enemy,obj_enemy_flying,obj_slime,obj_skeleton,obj_devil,obj_meteor_enemy,obj_meteor];
+        var _top=y-body_height-34;var _bottom=y+26;
+        var _kills=0;var _star_kills=0;
+        var _enemy_types=[obj_enemy,obj_enemy_flying,obj_slime,obj_skeleton,obj_skeleton_projectile,obj_devil,obj_meteor_enemy,obj_meteor];
         for (var _kind=0;_kind<array_length(_enemy_types);_kind++) {
             var _obj=_enemy_types[_kind];
             for (var _i=instance_number(_obj)-1;_i>=0;_i--) {
                 var _e=instance_find(_obj,_i);
-                if (_e!=noone && _e.x>_left && _e.x<_right && _e.y>_top && _e.y<_bottom) {
-                    var _reward=(_obj==obj_enemy && _e.kind==3?4:1);
-                    instance_destroy(_e);_kills++;material_count+=_reward;
+                if(_e==noone)continue;
+                var _is_star=(_obj==obj_enemy && _e.kind==3);
+                // Skeleton and its bolts get a generous parry box (padding around their centre) so the dash reliably catches them.
+                var _pad=(_obj==obj_skeleton?56:(_obj==obj_skeleton_projectile?40:(_obj==obj_enemy_flying?30:16)));
+                var _hit=(_e.x+_pad>_left && _e.x-_pad<_right && _e.y+_pad>_top && _e.y-_pad<_bottom);
+                if(_is_star) {
+                    // Let the parry catch the yellow star's bright body as it crosses the dash sweep.
+                    _hit=(_e.x+28>_left && _e.x-28<_right && _e.y+28>_top && _e.y-28<_bottom);
+                }
+                if(_hit) {
+                    instance_destroy(_e);_kills++;
+                    if(_is_star) {material_count+=4;collected_total+=4;_star_kills++;}
+                    else if(_obj!=obj_skeleton_projectile) material_count++;
                 }
             }
         }
         if (_kills>0) {
             dash_kills+=_kills;dash_kill_flash=12;
-            scr_sfx(sfx_hit,0.05,1);
+            scr_sfx(_star_kills>0?sfx_collect:sfx_hit,0.05,1);
         }
     } else {
         // Tall magnet column: grabs everything above and below the dash line.
@@ -381,7 +448,7 @@ function scr_player_dash_ability(_from_x) {
         var _grabbed=0;
         for (var _mi=instance_number(obj_material)-1;_mi>=0;_mi--) {
             var _m=instance_find(obj_material,_mi);
-            if (_m!=noone && _m.x>_mleft && _m.x<_mright && _m.y>_mtop && _m.y<_mbottom) {
+            if (_m!=noone && material_count<MAX_MATERIALS && _m.x>_mleft && _m.x<_mright && _m.y>_mtop && _m.y<_mbottom) {
                 material_count++;collected_total++;instance_destroy(_m);_grabbed++;
             }
         }
@@ -399,6 +466,7 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
         last_move=0;
         return;
     }
+    material_count=min(material_count,MAX_MATERIALS); // enemy drops and refunds can never push the stock past the cap
     build_cooldown=max(0,build_cooldown-1);
     build_flash=max(0,build_flash-1);
     double_jump_flash=max(0,double_jump_flash-1);
@@ -425,8 +493,12 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
         if (charge>=DASH_CHARGE_FRAMES) {
             _hdir=(_charge_dir!=0?_charge_dir:facing);
             _hthrust=DASH_THRUST;vy=-12;facing=_hdir;
+            // Controller aim: D-pad/stick up = steep upward dash (straight up if no side held), down = low flat dash.
+            if(dash_aim_y<0) {vy=-19;if(_charge_dir==0)_hthrust=DASH_THRUST*0.4;}
+            else if(dash_aim_y>0) vy=-5;
+            dash_aim_y=0;
             jump_rising=false;jump_hold_frames=0;
-            scr_sfx(sfx_jump,0.04);
+            scr_sfx(sfx_dash,0.04);
         }
         charge=0;_charge_dir=0;
     }
@@ -441,7 +513,7 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
                     jump_hold_frames=0;
                     jump_double_used=true;
                     double_jump_flash=12;
-                    scr_sfx(sfx_jump,0.04);
+                    scr_sfx(sfx_double_jump,0.04);
                 }
             } else {
                 jump_rising=false;
@@ -475,7 +547,7 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
     else vy = 0;
     grounded = scr_world_aabb_solid(x-body_half_width,y,x+body_half_width,y+1);
     var _m = instance_nearest(x,y-35,obj_material);
-    if (_m != noone && abs(_m.x-x)<40 && _m.y+18>y-body_height && _m.y-18<y) {
+    if (_m != noone && material_count<MAX_MATERIALS && abs(_m.x-x)<40 && _m.y+18>y-body_height && _m.y-18<y) {
         material_count++; collected_total++; instance_destroy(_m); scr_sfx(sfx_collect, 0.03);
     }
     if ((_build || _break) && build_cooldown<=0) {
@@ -488,12 +560,13 @@ function scr_player_tick(_move, _jump, _build, _jump_held=false, _jump_key_held=
                 if(_old_block.crack_until>=global.game_timer) {
                     material_count++;
                     instance_destroy(_old_block);
-                    scr_sfx(sfx_block,0.05);
+                    scr_sfx(sfx_block_break,0.05);
                 } else _old_block.crack_until=global.game_timer+30;
             }
         } else if(_build && _old_block==noone && material_count>0 && _target.valid) {
             var _new_block=instance_create_layer(_bx,_by,"Instances_1",obj_build_block);
             _new_block.builder_number=player_number;
+            // Blocks have no gravity: they stay exactly where they are placed (supported or not).
             build_flash=8;build_flash_x=_bx;build_flash_y=_by;
             material_count--;built_total++;scr_sfx(sfx_block,0.05);
         }
@@ -518,8 +591,8 @@ function scr_player_render(_index) {
     if(jump_held) _frame=0;
     else if(!grounded)_frame=3;
     else if(last_move!=0) {var _cycle=[0,1,0,2];_frame=_cycle[(global.game_timer div 7) mod 4];}
-    if(grounded && last_move==0 && !jump_held) scr_menu_idle(_index,x,y,80,facing);
-    else scr_actor_pose(_index,_frame,x,y,80,facing);
+    if(grounded && last_move==0 && !jump_held) scr_menu_idle(_index,x,y+PLAYER_FOOT_SINK,80,facing);
+    else scr_actor_pose(_index,_frame,x,y+PLAYER_FOOT_SINK,80,facing);
     var _accent=(_index==0 ? make_color_rgb(80,220,215) : make_color_rgb(247,181,77));
     draw_set_color(_accent);
     draw_triangle(x-6,y-94,x+6,y-94,x,y-87,false);
@@ -653,4 +726,28 @@ function scr_player_render(_index) {
         draw_triangle(_ix,y-99,_ix-3,y-103,_ix+3,y-103,false);
     }
     draw_set_color(c_white);
+}
+// Slimes only spawn standing on a surface that is visible: the ground, a checkpoint platform or a block.
+// Returns [x,y] (y = surface top) or undefined when nothing suitable is on screen right now.
+function scr_slime_spawn_point() {
+    var _cam_top=camera_get_view_y(view_camera[0]);
+    var _cam_bottom=_cam_top+camera_get_view_height(view_camera[0]);
+    for(var _try=0;_try<30;_try++) {
+        var _solid=instance_find(obj_world_solid,irandom(instance_number(obj_world_solid)-1));
+        if(_solid==noone || _solid.is_checkpoint) continue; // never pop out of a thin sky platform
+        if(_solid.y<_cam_top+120 || _solid.y>_cam_bottom-40) continue;
+        var _left=max(_solid.x+36,48);
+        var _right=min(_solid.x+_solid.solid_width-36,room_width-48);
+        if(_right<_left) continue;
+        var _sx=irandom_range(floor(_left),ceil(_right));
+        var _sy=_solid.y;
+        if(scr_world_aabb_solid(_sx-24,_sy-84,_sx+24,_sy-2)) continue;
+        var _far=true;
+        for(var _pi=0;_pi<2;_pi++) {
+            var _p=instance_find((_pi==0?obj_player_p1:obj_player_p2),0);
+            if(_p!=noone && _p.active_player && !_p.dead && point_distance(_sx,_sy,_p.x,_p.y)<220) _far=false;
+        }
+        if(_far) return [_sx,_sy];
+    }
+    return undefined;
 }

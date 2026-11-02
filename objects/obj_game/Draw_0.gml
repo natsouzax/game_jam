@@ -12,7 +12,6 @@ for (var _pi=0; _pi<2; _pi++) {
 var _mean_y=(_count>0?_sum_y/_count:camera_y+384);
 var _climb=clamp((_floor-_mean_y)/max(1,_floor-_finish),0,1);
 var _altitude=_climb;
-if (room==Room2) _altitude=lerp(0.72,1,_climb);
 altitude=_altitude;
 
 var _tick=global.game_timer;

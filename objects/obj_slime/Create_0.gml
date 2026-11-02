@@ -8,3 +8,6 @@ home_y=y;
 gravity_speed=0.38;
 vy=0;
 grounded=false;
+anim_seed=irandom(100);
+spawn_t=0;
+spawn_total=54;

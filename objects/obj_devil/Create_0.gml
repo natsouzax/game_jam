@@ -1,4 +1,4 @@
-hp=3;
+hp=2;
 state=0;
 attack_timer=5*60;
 target=noone;
@@ -12,3 +12,4 @@ base_y=y;
 depth=-4;
 hover_phase=0;
 fly_speed=2.5;
+scr_sfx(sfx_devil_spawn,0.04,0.7);

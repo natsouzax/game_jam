@@ -43,6 +43,7 @@ if(state==0) {
 for(var _j=0;_j<2;_j++) {
     var _pl=instance_find((_j==0?obj_player_p1:obj_player_p2),0);
     if(_pl==noone || !_pl.active_player || _pl.dead || _pl.invulnerable>0) continue;
+    if(_pl.player_number==0 && _pl._hthrust>0) continue;
     if(point_distance(x,y,_pl.x,_pl.y-35)<34) {
         if(_pl.vy>=0 && (_pl.y-35)<y && abs(_pl.x-x)<30) {
             hp--;

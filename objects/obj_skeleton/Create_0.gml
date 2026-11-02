@@ -1,9 +1,11 @@
+// Skeleton mage that guards a mid-tower checkpoint platform. y is the feet line.
 hp=1;
-teleport_timer=irandom_range(600,900);
-shoot_timer=120;
-phase=0;
+state=0;          // 0 materialising, 1 idle, 2 casting
+anim_t=0;
+cast_t=0;
+face=1;
+shoot_timer=irandom_range(50,90);
+projectile_speed=4.6;
 depth=-4;
-home_y=y;
-home_x=x;
-projectile_speed=2.0;
-state=0; // 0 idle, 1 shooting
+phase=0;
+home_x=x;home_y=y;

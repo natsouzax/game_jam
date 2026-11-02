@@ -1,3 +1,5 @@
+var _fw=solid_width;var _fh=solid_height;
+if(falling){solid_width=64;solid_height=64;}
 var _top=(is_checkpoint?make_color_rgb(110,155,142):make_color_rgb(189,151,105));
 var _face=(is_checkpoint?make_color_rgb(56,83,80):make_color_rgb(117,84,65));
 draw_set_color(make_color_rgb(20,24,31));draw_rectangle(x+4,y+4,x+solid_width-1,y+solid_height-1,false);
@@ -23,3 +25,4 @@ if(is_checkpoint) {
     }
 }
 draw_set_color(c_white);
+solid_width=_fw;solid_height=_fh;

@@ -16,7 +16,7 @@ Recursos existentes mantidos: sprites de P1/P2, folha idle do P1, cena ChatGPT_I
 
 Recortes medidos por alpha, nao pela suposicao de quadros iguais. P1 run: [0,30,290,430], [299,29,577,407], [596,30,887,430], [890,29,1183,430], [1186,30,1472,429], [1491,29,1756,427]. P1 idle: [219,90,522,627], [699,90,1008,627], [219,673,522,1207], [699,673,1002,1207]. P2 run e salto constam de scr_mvp.gml. Render normaliza para cerca de 86 px de altura e ancora os pes em y; a caixa de colisao e independente, 32x70. Transparencia RGBA conferida. Idle tem quatro poses/breve respiracao; movimento e salto selecionam recortes proprios. Inversao usa escala horizontal com sinal da direcao.
 
-Blocos, patrulha, divindade simbolica, vegetacao, interface e seis avatares finais sao desenhos GML originais. Sem audio, sem recursos comerciais de Comix Zone/Terraria. Esses jogos sao referencias de direcao, nao fontes de arquivos.
+Blocos, patrulha, divindade simbolica, vegetacao, interface e seis avatares finais sao desenhos GML originais. Musica e efeitos gerados por script (tools/generate_audio.py), narracao por voz sintetizada, sem recursos comerciais de Comix Zone/Terraria. Esses jogos sao referencias de direcao, nao fontes de arquivos.
 
 ## Contrato para Luiz e Emmanuel
 

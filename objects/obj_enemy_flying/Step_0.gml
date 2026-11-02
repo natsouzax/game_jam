@@ -1,4 +1,6 @@
 if (global.game_state != "play") exit;
+// Spawn: the rock cracks open and the foguinho emerges (no collision or movement until done).
+if (spawn_t > 0) { spawn_t--; exit; }
 hover_phase += 0.03 * speed_scale;
 attack_timer = max(0, attack_timer - 1);
 
@@ -70,7 +72,7 @@ for (var _i = 0; _i < 2; _i++) {
             _p.vy = _p.jump_speed;
             _p.invulnerable = 10;
             scr_sfx(sfx_hit, 0.04);
-            if (hp <= 0) { _p.material_count++; instance_destroy(); exit; }
+            if (hp <= 0) { _p.material_count++; instance_create_layer(x,y,"Instances_1",obj_fx_foguinho); instance_destroy(); exit; }
             state = 0;
             attack_timer = round(420 / speed_scale);
             start_x = x;

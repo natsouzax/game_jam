@@ -49,6 +49,14 @@ else if(_state=="play" || _state=="pause") {
                 draw_set_color(make_color_rgb(255,170,169));draw_rectangle(_hx-8,_hy-8,_hx-4,_hy-5,false);
             }
         }
+        // Resource counter: purple diamond + stock/cap (turns gold at the cap).
+        var _full=(_p.material_count>=MAX_MATERIALS);
+        draw_set_color(make_color_rgb(173,65,238));
+        draw_triangle(_hud_x+84,59,_hud_x+91,66,_hud_x+77,66,false);draw_triangle(_hud_x+77,66,_hud_x+84,73,_hud_x+91,66,false);
+        draw_set_color(_full?make_color_rgb(255,218,128):c_white);
+        draw_set_halign(fa_left);draw_set_valign(fa_middle);
+        draw_text_transformed(_hud_x+99,66,string(min(_p.material_count,MAX_MATERIALS))+"/"+string(MAX_MATERIALS)+(_full?" MAX":""),0.9,0.9,0);
+        draw_set_valign(fa_top);
         if(_p.y<camera_y+60) {draw_set_color(_accent);draw_triangle(_hud_x+29,81,_hud_x+19,94,_hud_x+39,94,false);}
         if(!_p.dead && global.player_count==2 && _p.player_lives==3) {
             var _mate=instance_find((_j==0?obj_player_p2:obj_player_p1),0);
@@ -61,6 +69,25 @@ else if(_state=="play" || _state=="pause") {
                 draw_set_alpha(1);
             }
         }
+    }
+    // Progress to victory: how much of the climb is left for the player furthest behind (everyone alive must reach the top).
+    var _ref_y=-1;
+    for(var _k=0;_k<2;_k++) {
+        var _kp=instance_find((_k==0?obj_player_p1:obj_player_p2),0);
+        if(_kp!=noone && _kp.active_player && !_kp.dead) _ref_y=max(_ref_y,_kp.y);
+    }
+    if(_ref_y>=0) {
+        var _goal_y=(room==Room1?260:220);
+        var _prog=clamp((scr_floor_y()-_ref_y)/max(1,scr_floor_y()-_goal_y),0,1);
+        var _left=ceil((1-_prog)*100);
+        var _bx=483;var _bw=400;
+        draw_set_alpha(0.7);draw_set_color(make_color_rgb(12,20,28));draw_rectangle(_bx-10,10,_bx+_bw+10,58,false);draw_set_alpha(1);
+        draw_set_color(make_color_rgb(28,40,49));draw_rectangle(_bx,38,_bx+_bw,48,false);
+        draw_set_color(_left<=15?make_color_rgb(255,218,128):make_color_rgb(80,220,215));
+        draw_rectangle(_bx,38,_bx+_bw*_prog,48,false);
+        draw_set_color(c_white);draw_set_halign(fa_center);draw_set_valign(fa_top);
+        draw_text_transformed(_bx+_bw/2,14,(_left>0?"FALTAM "+string(_left)+"%":"TOPO!"),1.2,1.2,0);
+        draw_set_halign(fa_left);
     }
     draw_set_color(make_color_rgb(150,168,162));
     draw_rectangle(1320,726,1325,743,false);draw_rectangle(1331,726,1336,743,false);

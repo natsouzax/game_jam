@@ -12,4 +12,5 @@ base_y=y;
 depth=-4;
 hover_phase=0;
 difficulty=0;
-speed_scale=1;
+speed_scale=1;spawn_t=0;
+spawn_total=36;
