@@ -1,4 +1,4 @@
-hp=2;
+hp=1;
 state=0;
 attack_timer=irandom_range(240,420);
 target=noone;
@@ -11,3 +11,6 @@ attack_progress=0;
 attack_duration=90;
 depth=-4;
 hover_phase=random(pi*2);
+home_x=x;home_y=y;
+difficulty=0;
+speed_scale=1;

@@ -1,5 +1,5 @@
 if(global.game_state!="play")exit;
-hover_phase+=0.035;
+hover_phase+=0.035*speed_scale;
 attack_timer=max(0,attack_timer-1);
 
 if(state==0) {
@@ -33,7 +33,7 @@ if(state==0) {
     y=lerp(start_y,target_y,_s)-sin(_t*pi)*40;
     if(_t>=1) {
         state=0;
-        attack_timer=irandom_range(300,480);
+        attack_timer=round(irandom_range(300,480)/speed_scale);
         start_x=x;
         start_y=y;
         base_y=y;
@@ -43,15 +43,16 @@ if(state==0) {
 for(var _j=0;_j<2;_j++) {
     var _pl=instance_find((_j==0?obj_player_p1:obj_player_p2),0);
     if(_pl==noone || !_pl.active_player || _pl.dead || _pl.invulnerable>0) continue;
+    if(_pl.player_number==0 && _pl._hthrust>0) continue;
     if(point_distance(x,y,_pl.x,_pl.y-35)<34) {
         if(_pl.vy>=0 && (_pl.y-35)<y && abs(_pl.x-x)<30) {
             hp--;
             _pl.vy=_pl.jump_speed;
             _pl.invulnerable=10;
             scr_sfx(sfx_hit,0.04);
-            if(hp<=0){instance_destroy();exit;}
+            if(hp<=0){_pl.material_count++;instance_destroy();exit;}
             state=0;
-            attack_timer=irandom_range(240,420);
+            attack_timer=round(irandom_range(240,420)/speed_scale);
             start_x=x;
             start_y=y;
             base_y=y;

@@ -1,11 +1,17 @@
 if(global.game_state!="play")exit;
-age++;if(age>480){instance_destroy();exit;}
+age++;
+// A resource vanishes 7 s (420 frames) after it lands; one still falling lasts up to 60 s.
+if(age>(landed?420:3600)){instance_destroy();exit;}
+var _drop_altitude=scr_enemy_altitude();
+gravity_speed=scr_resource_fall_gravity(_drop_altitude);
+fall_max=scr_resource_fall_max(_drop_altitude);
 fall_speed = min(fall_speed + gravity_speed, fall_max);
 var _next_y = y + fall_speed;
 var _landing_y = scr_world_landing_surface(x - 18, x + 18, y + 18, _next_y + 18);
 if (_landing_y != noone) {
     y = _landing_y - 18;
     fall_speed = 0;
+    if(!landed){landed=true;age=0;}
 } else if (!scr_world_aabb_solid(x - 18, _next_y - 18, x + 18, _next_y + 18)) {
     y = _next_y;
 }

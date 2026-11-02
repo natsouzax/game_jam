@@ -7,8 +7,9 @@ if(_state=="studio") {
     draw_set_halign(fa_center);draw_set_valign(fa_middle);
     draw_text_transformed(683,384,"Lusitanos Games",2.1,2.1,0);
     draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_alpha(1);
-    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1120,700,1352,752,false);draw_set_alpha(1);
-    scr_ui_hint(1236,726,"E","PULAR");
+    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1288,700,1352,752,false);draw_set_alpha(1);
+    draw_set_color(c_white);draw_triangle(1310,715,1310,737,1326,726,false);
+    if(global.game_timer>30)scr_draw_skip_x();
     draw_set_halign(fa_left);draw_set_valign(fa_top);
 } else if(_state=="video") {
     draw_set_color(c_black);draw_rectangle(0,0,1366,768,false);
@@ -18,8 +19,9 @@ if(_state=="studio") {
             draw_surface_stretched(_video_frame[1],0,0,1366,768);
         if(_video_frame[0]==-1)global.boot_video_error=true;
     }
-    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1120,700,1352,752,false);draw_set_alpha(1);
-    scr_ui_hint(1236,726,"E","PULAR");
+    draw_set_alpha(0.55);draw_set_color(make_color_rgb(8,13,20));draw_rectangle(1288,700,1352,752,false);draw_set_alpha(1);
+    draw_set_color(c_white);draw_triangle(1310,715,1310,737,1326,726,false);
+    if(global.game_timer>60)scr_draw_skip_x();
     draw_set_halign(fa_left);draw_set_valign(fa_top);
 } else if(_state=="title")scr_draw_title_menu();
 else if(_state=="intro")scr_draw_intro();
@@ -33,6 +35,11 @@ else if(_state=="play" || _state=="pause") {
         draw_set_color(_accent);draw_rectangle(_hud_x,16,_hud_x+176,78,false);
         draw_set_color(make_color_rgb(28,40,49));draw_rectangle(_hud_x+4,20,_hud_x+172,74,false);
         draw_set_color(_accent);draw_circle(_hud_x+29,46,16,false);
+        if(_p.dead) {
+            draw_set_color(make_color_rgb(242,90,108));
+            draw_line_width(_hud_x+21,38,_hud_x+37,54,4);
+            draw_line_width(_hud_x+37,38,_hud_x+21,54,4);
+        }
         for(var _li=0;_li<3;_li++) {
             var _hx=_hud_x+76+_li*29;var _hy=44;
             draw_set_color(_li<_p.player_lives?make_color_rgb(242,90,108):make_color_rgb(72,82,89));
@@ -42,14 +49,53 @@ else if(_state=="play" || _state=="pause") {
                 draw_set_color(make_color_rgb(255,170,169));draw_rectangle(_hx-8,_hy-8,_hx-4,_hy-5,false);
             }
         }
+        // Resource counter: purple diamond + stock/cap (turns gold at the cap).
+        var _full=(_p.material_count>=MAX_MATERIALS);
+        draw_set_color(make_color_rgb(173,65,238));
+        draw_triangle(_hud_x+84,59,_hud_x+91,66,_hud_x+77,66,false);draw_triangle(_hud_x+77,66,_hud_x+84,73,_hud_x+91,66,false);
+        draw_set_color(_full?make_color_rgb(255,218,128):c_white);
+        draw_set_halign(fa_left);draw_set_valign(fa_middle);
+        draw_text_transformed(_hud_x+99,66,string(min(_p.material_count,MAX_MATERIALS))+"/"+string(MAX_MATERIALS)+(_full?" MAX":""),0.9,0.9,0);
+        draw_set_valign(fa_top);
         if(_p.y<camera_y+60) {draw_set_color(_accent);draw_triangle(_hud_x+29,81,_hud_x+19,94,_hud_x+39,94,false);}
+        if(!_p.dead && global.player_count==2 && _p.player_lives==3) {
+            var _mate=instance_find((_j==0?obj_player_p2:obj_player_p1),0);
+            if(_mate!=noone && _mate.dead) {
+                var _pulse=0.55+0.45*sin(global.game_timer*0.12);
+                draw_set_alpha(_pulse);draw_set_color(make_color_rgb(255,218,128));
+                draw_circle(_hud_x+163,45,12,true);
+                draw_line_width(_hud_x+157,45,_hud_x+169,45,2);
+                draw_line_width(_hud_x+163,39,_hud_x+163,51,2);
+                draw_set_alpha(1);
+            }
+        }
     }
-    draw_set_halign(fa_right);draw_set_valign(fa_bottom);
+    // Progress to victory: how much of the climb is left for the player furthest behind (everyone alive must reach the top).
+    var _ref_y=-1;
+    for(var _k=0;_k<2;_k++) {
+        var _kp=instance_find((_k==0?obj_player_p1:obj_player_p2),0);
+        if(_kp!=noone && _kp.active_player && !_kp.dead) _ref_y=max(_ref_y,_kp.y);
+    }
+    if(_ref_y>=0) {
+        var _goal_y=(room==Room1?260:220);
+        var _prog=clamp((scr_floor_y()-_ref_y)/max(1,scr_floor_y()-_goal_y),0,1);
+        var _left=ceil((1-_prog)*100);
+        var _bx=483;var _bw=400;
+        draw_set_alpha(0.7);draw_set_color(make_color_rgb(12,20,28));draw_rectangle(_bx-10,10,_bx+_bw+10,58,false);draw_set_alpha(1);
+        draw_set_color(make_color_rgb(28,40,49));draw_rectangle(_bx,38,_bx+_bw,48,false);
+        draw_set_color(_left<=15?make_color_rgb(255,218,128):make_color_rgb(80,220,215));
+        draw_rectangle(_bx,38,_bx+_bw*_prog,48,false);
+        draw_set_color(c_white);draw_set_halign(fa_center);draw_set_valign(fa_top);
+        draw_text_transformed(_bx+_bw/2,14,(_left>0?"FALTAM "+string(_left)+"%":"TOPO!"),1.2,1.2,0);
+        draw_set_halign(fa_left);
+    }
     draw_set_color(make_color_rgb(150,168,162));
-    draw_text_transformed(1342,746,"ESC  PAUSA",0.9,0.9,0);
-    draw_set_halign(fa_left);draw_set_valign(fa_top);
+    draw_rectangle(1320,726,1325,743,false);draw_rectangle(1331,726,1336,743,false);
 } else if(_state=="gameover") scr_draw_gameover();
-else if(_state=="ending") scr_draw_ending(ending_timer);
+else if(_state=="ending") {
+    scr_draw_ending(ending_timer);
+    if(ending_timer>30 && ending_timer<4600)scr_draw_skip_x();
+}
 if(_state=="pause")scr_draw_pause();
 draw_set_alpha(1);draw_set_color(c_white);
 if(global.qa_regression) {

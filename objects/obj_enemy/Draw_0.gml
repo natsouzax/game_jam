@@ -29,7 +29,7 @@ switch(kind) {
         break;
     }
     case 2:
-        scr_actor_pose(2,(global.game_timer div 12) mod 3,x,y+30,draw_height,cos(phase)>=0?1:-1);
+        scr_actor_pose(2,(global.game_timer div 12) mod 3,x,y+30,draw_height,walk_dir);
         break;
     case 3: {
         var _star_pulse=0.7+0.3*sin(global.game_timer*0.2);
