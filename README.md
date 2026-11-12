@@ -33,11 +33,11 @@ A cooperative platformer created during a game jam, where teamwork, creativity, 
 
 ### Main Menu
 
-![Together — Main Menu](docs/images/together-menu.png)
+![Together — Main Menu](readme_github/menu_preview.png)
 
 ### Gameplay
 
-![Together — Gameplay](docs/images/together-gameplay.png)
+![Together — Gameplay](readme_github/game_preview.png)
 
 *Build, climb, and survive together.*
 
