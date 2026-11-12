@@ -6,12 +6,15 @@
 
 A game jam platformer about collecting, building, and reaching the top together.
 
+**Designed for controllers · Up to 2 controllers · Keyboard supported**
+
 ![GameMaker](https://img.shields.io/badge/Made_with-GameMaker-000000?style=flat-square&logo=gamemaker)
 ![Windows](https://img.shields.io/badge/Platform-Windows_64--bit-0078D6?style=flat-square)
 ![Players](https://img.shields.io/badge/Players-Solo_%7C_Local_Co--op-28a745?style=flat-square)
+![Controllers](https://img.shields.io/badge/Input-Up_to_2_controllers_%7C_Keyboard-8b5cf6?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Jam_Preview-e8a838?style=flat-square)
 
-### [⬇ Download the earlier Windows preview](https://github.com/natsouzax/game_jam/releases/latest/download/JUNTOS-Windows.zip)
+### [⬇ Download for Windows](https://github.com/natsouzax/game_jam/releases/latest/download/Together_final.exe)
 
 [How to play](#how-to-play) · [Controls](#controls) · [For developers](#for-developers) · [Credits](#credits)
 
@@ -25,23 +28,18 @@ Play on your own with either character, or team up with someone beside you in **
 
 - **Build your own path:** each player collects materials and spends them to place blocks.
 - **Climb and survive:** jump onto enemies, dodge hazards, and use checkpoints along the way.
-- **Share the journey:** cooperate on the same screen and keyboard.
+- **Share the journey:** play local co-op on the same screen with up to two controllers, or use the keyboard.
 - **Explore the story:** an opening introduces the ruined world and the mission ahead.
 
 ## Download & play
 
-> **Earlier preview:** the download below is an older build. The final Windows executable is awaiting upload; this release does not contain it yet.
-
 **You do not need GameMaker or the source code to play.**
 
-1. **[Download JUNTOS-Windows.zip](https://github.com/natsouzax/game_jam/releases/latest/download/JUNTOS-Windows.zip).**
-2. Right-click the downloaded ZIP and select **Extract All**.
-3. Open the extracted **JUNTOS-Windows** folder.
-4. Double-click **Play.cmd** to launch the game.
+1. **[Download Together_final.exe](https://github.com/natsouzax/game_jam/releases/latest/download/Together_final.exe).**
+2. Open the downloaded executable and follow any on-screen instructions.
+3. Connect up to **two controllers**, or play with the keyboard.
 
 **Requirements:** Windows 64-bit with DirectX 11.
-
-> Keep all extracted files together. `TOGETHER.exe` needs `data.win` and the included opening video. Use `Play.cmd` to start it with the correct game data, and extract the ZIP before playing.
 
 [View releases and download assets →](https://github.com/natsouzax/game_jam/releases)
 
@@ -55,6 +53,21 @@ Watch out for meteors: they can destroy the blocks you build. Reach the top with
 
 ## Controls
 
+**Designed for controllers first**, with support for **up to two controllers** for local co-op. Keyboard controls are also available.
+
+### Controller
+
+| Action | Xbox-style button | PlayStation-style button |
+| :--- | :---: | :---: |
+| Move | Left stick / D-pad | Left stick / D-pad |
+| Jump | A | ✕ Cross |
+| Build / break | X | □ Square |
+| Charge dash | B | ○ Circle |
+
+To break a built block, stand on it and press the build button **twice quickly**.
+
+### Keyboard
+
 | Action | Solo / Player 1 | Player 2 |
 | :--- | :---: | :---: |
 | Move | A / D | ← / → |
@@ -65,17 +78,13 @@ Watch out for meteors: they can destroy the blocks you build. Reach the top with
 | Toggle audio | M | M |
 | Toggle fullscreen | F11 | F11 |
 
-To break a built block, stand on it and press the build key **twice quickly**.
-
-**Menu:** A/D or ←/→ to select, E/Enter to confirm, and S/↓ to return from character selection. E/Enter also skips the opening.
-
-**Controller support:** the first connected controller controls Player 2 in co-op or the selected character in solo. Use the left stick/D-pad to move, A/Cross to jump, X/Square to build, and B/Circle to charge dash. Physical controller compatibility still needs testing; see the [controller notes](docs/CONTROLLER_SUPPORT.md).
+**Main menu:** W/S to navigate and E to confirm. Hold Esc for 3 seconds to exit.
 
 ## For developers
 
 Built with **GameMaker** and **GML**.
 
-Open [`gameJam.yyp`](gameJam.yyp) in GameMaker to explore or run the project. The playable Windows download is packaged from the existing preview in `delivery/preview_opening_combat/`; it is not a fresh compilation of the current source.
+Open [`gameJam.yyp`](gameJam.yyp) in GameMaker to explore or run the project. The current playable Windows executable is available in [Releases](https://github.com/natsouzax/game_jam/releases). The `delivery/preview_opening_combat/` directory contains an older preview.
 
 | Path | Contents |
 | :--- | :--- |
@@ -88,7 +97,7 @@ Open [`gameJam.yyp`](gameJam.yyp) in GameMaker to explore or run the project. Th
 | `delivery/` | Existing Windows preview and jam delivery material |
 | `tools/` | Build and production utilities |
 
-The [Windows packaging workflow](.github/workflows/publish-windows.yml) bundles the executable with its required files and publishes a ZIP in Releases. It can also be run manually through the repository's Actions tab.
+The [Windows packaging workflow](.github/workflows/publish-windows.yml) packages the older preview in `delivery/preview_opening_combat/`. It does not package the current final executable.
 
 ## Credits
 
@@ -98,7 +107,7 @@ Some artwork and opening-video imagery were generated with AI. Scene narration u
 
 ## Preview status & feedback
 
-This is a **game jam preview**. The repository documents Runner-based checks and manual play sessions; physical controller support, two-player keyboard ghosting, and compatibility on another PC still need human verification.
+The current Windows release supports up to **two controllers** and keyboard input. Technical test reports in this repository describe earlier builds.
 
 Found a bug or have an idea? [Open an issue](https://github.com/natsouzax/game_jam/issues) and include what happened, how to reproduce it, and your Windows version.
 
@@ -108,6 +117,6 @@ Found a bug or have an idea? [Open an issue](https://github.com/natsouzax/game_j
 
 **Build a path. Bring someone with you.**
 
-[Download & play](https://github.com/natsouzax/game_jam/releases/latest/download/JUNTOS-Windows.zip)
+[Download & play](https://github.com/natsouzax/game_jam/releases/latest/download/Together_final.exe)
 
 </div>
