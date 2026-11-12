@@ -11,13 +11,11 @@ A game jam platformer about collecting, building, and reaching the top together.
 ![Players](https://img.shields.io/badge/Players-Solo_%7C_Local_Co--op-28a745?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Jam_Preview-e8a838?style=flat-square)
 
-### [⬇ Download for Windows](https://github.com/natsouzax/game_jam/releases/latest/download/JUNTOS-Windows.zip)
+### [⬇ Download the earlier Windows preview](https://github.com/natsouzax/game_jam/releases/latest/download/JUNTOS-Windows.zip)
 
 [How to play](#how-to-play) · [Controls](#controls) · [For developers](#for-developers) · [Credits](#credits)
 
 </div>
-
-![JUNTOS gameplay](delivery/tests/controls_fix/qa_regression_play.png)
 
 ## The game
 
@@ -31,6 +29,8 @@ Play on your own with either character, or team up with someone beside you in **
 - **Explore the story:** an opening introduces the ruined world and the mission ahead.
 
 ## Download & play
+
+> **Earlier preview:** the download below is an older build. The final Windows executable is awaiting upload; this release does not contain it yet.
 
 **You do not need GameMaker or the source code to play.**
 
@@ -70,12 +70,6 @@ To break a built block, stand on it and press the build key **twice quickly**.
 **Menu:** A/D or ←/→ to select, E/Enter to confirm, and S/↓ to return from character selection. E/Enter also skips the opening.
 
 **Controller support:** the first connected controller controls Player 2 in co-op or the selected character in solo. Use the left stick/D-pad to move, A/Cross to jump, X/Square to build, and B/Circle to charge dash. Physical controller compatibility still needs testing; see the [controller notes](docs/CONTROLLER_SUPPORT.md).
-
-## A look inside
-
-![Local co-op in JUNTOS](delivery/tests/qa_coop_start.png)
-
-*Gameplay captures from the repository's test sessions.*
 
 ## For developers
 
