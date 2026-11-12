@@ -238,7 +238,6 @@ For the latest playable version, use the [official releases page](https://github
 - Guilherme
 - Luiz
 - Emmanuel
-- Vanessa
 - Vitally
 
 ### Art, Audio & Production
