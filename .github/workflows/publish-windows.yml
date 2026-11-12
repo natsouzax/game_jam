@@ -1,0 +1,40 @@
+name: Publish Windows download
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/publish-windows.yml'
+permissions:
+  contents: write
+concurrency:
+  group: windows-preview-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package the existing Windows preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p package/JUNTOS-Windows
+          for file in TOGETHER.exe data.win intro_story.mp4 options.ini Play.cmd; do
+            test -s "delivery/preview_opening_combat/$file"
+            cp "delivery/preview_opening_combat/$file" package/JUNTOS-Windows/
+          done
+          cp docs/PLAY-WINDOWS.txt package/JUNTOS-Windows/README.txt
+          cd package
+          zip -r ../JUNTOS-Windows.zip JUNTOS-Windows
+          cd ..
+          sha256sum JUNTOS-Windows.zip > JUNTOS-Windows.zip.sha256
+          unzip -t JUNTOS-Windows.zip
+      - name: Publish preview release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="windows-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$tag" JUNTOS-Windows.zip JUNTOS-Windows.zip.sha256 --target "$GITHUB_SHA" --title "JUNTOS — Windows Preview" --notes-file docs/RELEASE-NOTES.md --latest
