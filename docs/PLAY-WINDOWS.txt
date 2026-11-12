@@ -1,0 +1,38 @@
+JUNTOS (TOGETHER) - Windows Preview
+
+HOW TO PLAY
+1. Extract the entire JUNTOS-Windows.zip archive.
+2. Open the extracted JUNTOS-Windows folder.
+3. Double-click Play.cmd to launch TOGETHER.exe with its game data.
+
+Windows 64-bit and DirectX 11 are required. GameMaker is not required.
+Keep TOGETHER.exe, data.win, intro_story.mp4, options.ini and Play.cmd together.
+Do not run the game from inside the ZIP or download the EXE alone.
+
+KEYBOARD
+Solo / Player 1: A/D move, W jump, E build/break, Q charge dash.
+Player 2: Left/Right move, Up jump, Enter build/break, Right Shift charge dash.
+Esc or P pauses. M toggles sound. F11 toggles fullscreen.
+Press the build key twice quickly while standing on a built block to break it.
+
+MENU
+A/D or Left/Right selects a mode. E/Enter confirms.
+In solo mode, select a character and confirm again.
+E/Enter skips the opening.
+
+GOAL
+Collect falling materials, build your way up, and face enemies and meteors.
+In local co-op, both active players must reach the top.
+Jump onto enemies to defeat them. Each player has an individual material supply.
+Each placed block costs one material.
+
+CONTROLLER
+The first connected controller controls Player 2 in co-op, or the selected
+character in solo. Left stick/D-pad moves, A jumps, X builds, B charges dash.
+Physical controller compatibility has not yet been verified.
+
+This is an existing game jam preview, packaged without rebuilding the game.
+Compatibility on other PCs has not yet been verified.
+
+Source, credits and feedback:
+https://github.com/natsouzax/game_jam
